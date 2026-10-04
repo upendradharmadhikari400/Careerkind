@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessments: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          mode: string
+          result: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          mode: string
+          result?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          mode?: string
+          result?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      student_profiles: {
+        Row: {
+          area: string
+          board: string
+          category: string
+          city: string
+          consent_confirmed: boolean
+          created_at: string
+          id: string
+          parent_name: string
+          phone: string
+          principal_name: string
+          school: string
+          state: string
+          student_name: string
+          subjects: string | null
+          user_id: string
+        }
+        Insert: {
+          area: string
+          board: string
+          category: string
+          city: string
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          parent_name: string
+          phone: string
+          principal_name: string
+          school: string
+          state: string
+          student_name: string
+          subjects?: string | null
+          user_id: string
+        }
+        Update: {
+          area?: string
+          board?: string
+          category?: string
+          city?: string
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          parent_name?: string
+          phone?: string
+          principal_name?: string
+          school?: string
+          state?: string
+          student_name?: string
+          subjects?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

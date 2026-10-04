@@ -1,0 +1,15 @@
+CREATE TABLE public.student_profiles (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL UNIQUE, student_name text NOT NULL, parent_name text NOT NULL, phone text NOT NULL, category text NOT NULL, school text NOT NULL, area text NOT NULL, city text NOT NULL, state text NOT NULL, board text NOT NULL, principal_name text NOT NULL, subjects text DEFAULT '', consent_confirmed boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.student_profiles TO authenticated;
+GRANT ALL ON public.student_profiles TO service_role;
+ALTER TABLE public.student_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Own profile read" ON public.student_profiles FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Own profile insert" ON public.student_profiles FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Own profile update" ON public.student_profiles FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE TABLE public.assessments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL, mode text NOT NULL CHECK (mode IN ('student','parent','joint')), status text NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress','complete')), answers jsonb NOT NULL DEFAULT '[]'::jsonb, result jsonb, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.assessments TO authenticated;
+GRANT ALL ON public.assessments TO service_role;
+ALTER TABLE public.assessments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Own assessment read" ON public.assessments FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Own assessment insert" ON public.assessments FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Own assessment update" ON public.assessments FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE INDEX assessments_user_created_idx ON public.assessments (user_id, created_at DESC);
