@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { ArrowRight, BrainCircuit, Check, Compass, LogOut, Sparkles, Users, UserRound, Clock3, ShieldCheck, ChevronLeft } from 'lucide-react';
 import type { Session, User } from '@supabase/supabase-js';
@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import studentImage from '@/assets/career-students.jpg.asset.json';
-import type { Database, Json } from '@/integrations/supabase/types';
+import type { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['student_profiles']['Row'];
 type Assessment = Database['public']['Tables']['assessments']['Row'];
@@ -96,7 +96,9 @@ export function CareerApp() {
     if (assessment.status === 'complete' && result) setReport(result);
     else {
       setActive(assessment);
-      setQuestion(firstQuestion(assessment.mode as Mode, profile.student_name));
+      const saved = assessment.result as { question?: string; reflection?: string } | null;
+      setQuestion(saved?.question ?? firstQuestion(assessment.mode as Mode, profile.student_name));
+      setReflection(saved?.reflection ?? '');
     }
   }} onSignOut={() => void supabase.auth.signOut()} />;
 }
@@ -199,8 +201,8 @@ function Stat({value,label}:{value:string;label:string}) { return <div><div clas
 
 function AssessmentScreen({ assessment, profile, initialQuestion, initialReflection, onQuestion, onReflection, onReport, onExit }: { assessment: Assessment; profile: Profile; initialQuestion: string; initialReflection: string; onQuestion: (s:string)=>void; onReflection:(s:string)=>void; onReport:(r:Report)=>void; onExit:()=>void }) {
   const advance = useServerFn(advanceAssessment); const [answer,setAnswer]=useState(''); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
-  const count = Array.isArray(assessment.answers) ? assessment.answers.length : 0; const total=assessment.mode==='joint'?6:5; const nextRole=assessment.mode==='joint'?(count%2===0?'Student':'Parent'):assessment.mode==='parent'?'Parent':'Student';
-  async function submit(event:FormEvent){event.preventDefault(); if(!answer.trim())return; setBusy(true);setError('');try{const response=await advance({data:{assessmentId:assessment.id,question:initialQuestion,answer}});setAnswer('');if(response.complete&&response.result)onReport(response.result);else{onQuestion(response.question);onReflection(response.reflection);}}catch(err){setError(err instanceof Error?err.message:'Your answer was saved, but the next question could not be prepared.');}finally{setBusy(false)}}
+  const [count, setCount] = useState(Array.isArray(assessment.answers) ? assessment.answers.length : 0); const total=assessment.mode==='joint'?6:5; const nextRole=assessment.mode==='joint'?(count%2===0?'Student':'Parent'):assessment.mode==='parent'?'Parent':'Student';
+  async function submit(event:FormEvent){event.preventDefault(); if(!answer.trim())return; setBusy(true);setError('');try{const response=await advance({data:{assessmentId:assessment.id,question:initialQuestion,answer}});setAnswer('');setCount(current=>current+1);if(response.complete&&response.result)onReport(response.result);else{onQuestion(response.question);onReflection(response.reflection);}}catch(err){setError(err instanceof Error?err.message:'Your answer was saved, but the next question could not be prepared.');}finally{setBusy(false)}}
   return <main className="min-h-screen bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-4xl items-center justify-between px-5"><Brand/><Button variant="ghost" onClick={onExit}><ChevronLeft/>Save & exit</Button></div></header><section className="mx-auto grid max-w-4xl gap-10 px-5 py-10 lg:grid-cols-[1fr_220px]"><div><div className="flex items-center justify-between"><Badge variant="secondary">{MODES.find(m=>m.mode===assessment.mode)?.title}</Badge><span className="text-xs text-muted-foreground">Question {Math.min(count+1,total)} of about {total}</span></div><Progress className="mt-4" value={(count/total)*100}/>{initialReflection&&<div className="mt-8 border-l-2 border-primary bg-secondary/60 px-4 py-3 text-sm leading-6 text-secondary-foreground">{initialReflection}</div>}<p className="mt-10 text-xs font-bold uppercase text-primary">For the {nextRole.toLowerCase()}</p><h1 className="mt-3 text-2xl font-extrabold leading-snug sm:text-3xl">{initialQuestion}</h1><form onSubmit={submit} className="mt-7"><Textarea value={answer} onChange={(e)=>setAnswer(e.target.value)} placeholder="Share what comes to mind. There are no right or wrong answers." className="min-h-40 resize-none bg-card p-4 text-base" maxLength={1500}/><div className="mt-3 flex items-center justify-between"><span className="text-xs text-muted-foreground">{answer.length}/1500</span><Button size="lg" type="submit" disabled={busy||answer.trim().length<2}>{busy?'Thinking about your answer…':'Continue'}{!busy&&<ArrowRight/>}</Button></div>{error&&<p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}</form></div><aside className="border-t pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"><ShieldCheck className="size-5 text-primary"/><h2 className="mt-3 text-sm font-bold">A safe exploration</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">The AI explores patterns, not labels. It will not choose a career for {profile.student_name} or promise an outcome.</p><div className="mt-6 border-t pt-5"><p className="text-xs font-semibold">You can pause anytime.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Every submitted answer is saved to this account.</p></div></aside></section></main>;
 }
 

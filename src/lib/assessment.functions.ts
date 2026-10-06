@@ -51,7 +51,9 @@ export const advanceAssessment = createServerFn({ method: 'POST' })
           ? 'student'
           : 'parent'
         : assessment.mode;
-    const answers: Answer[] = [...existing, { role, question: data.question, answer: data.answer }];
+    const lastAnswer = existing[existing.length - 1];
+    const retrySavedAnswer = lastAnswer?.question === data.question && lastAnswer.answer === data.answer;
+    const answers: Answer[] = retrySavedAnswer ? existing : [...existing, { role, question: data.question, answer: data.answer }];
     const { error: saveError } = await context.supabase
       .from('assessments')
       .update({ answers, updated_at: new Date().toISOString() })
@@ -73,6 +75,7 @@ export const advanceAssessment = createServerFn({ method: 'POST' })
         apiKey,
         `You are a careful Indian career exploration guide for students and parents. The child may be a minor. Stay within educational and career guidance. Never request sensitive identifiers. Findings are tentative decision support, not guarantees. Student: ${profile.student_name}; level: ${profile.category}; subjects: ${profile.subjects || 'not provided'}; city: ${profile.city}; mode: ${assessment.mode}. ${task}`,
         JSON.stringify(answers),
+        complete,
       );
       const parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '').trim()) as Reply;
       if (complete) {
@@ -86,6 +89,10 @@ export const advanceAssessment = createServerFn({ method: 'POST' })
         return { complete: true, question: '', reflection: '', result: parsed };
       }
       if (!parsed.question) throw new Error('Invalid question');
+      const { error: questionSaveError } = await context.supabase.from('assessments')
+        .update({ result: { question: parsed.question, reflection: parsed.reflection || '' }, updated_at: new Date().toISOString() })
+        .eq('id', assessment.id).eq('user_id', context.userId);
+      if (questionSaveError) throw questionSaveError;
       return {
         complete: false,
         question: parsed.question,
@@ -94,6 +101,11 @@ export const advanceAssessment = createServerFn({ method: 'POST' })
       };
     } catch (error) {
       console.error('Assessment generation failed', error);
+      if (error && typeof error === 'object' && 'statusCode' in error) {
+        if (error.statusCode === 402) throw new Error('AI usage is paused because credits are unavailable. The app owner can add credits in Settings → Plans & credits. Your answer is saved.');
+        if (error.statusCode === 403) throw new Error('The AI service cannot access this model. The app owner needs to review AI access settings. Your answer is saved.');
+        if (error.statusCode === 429) throw new Error('The AI service is busy. Wait a moment before trying again. Your answer is saved.');
+      }
       throw new Error('AI counselling is temporarily unavailable. Your answer was saved; please try again later.');
     }
   });
