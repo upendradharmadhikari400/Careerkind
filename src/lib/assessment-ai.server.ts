@@ -1,8 +1,9 @@
 import { createOpenAI } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { streamText, Output } from 'ai';
+import { z } from 'zod';
 import { createLovableAiGatewayRunIdFetch } from './run-id.server.ts';
 
-export async function generateAssessmentJson(apiKey: string, instructions: string, input: string) {
+export async function generateAssessmentJson(apiKey: string, instructions: string, input: string, complete: boolean) {
   const runIdFetch = createLovableAiGatewayRunIdFetch();
   const provider = createOpenAI({
     baseURL: 'https://ai.gateway.lovable.dev/v1',
@@ -17,6 +18,11 @@ export async function generateAssessmentJson(apiKey: string, instructions: strin
     model: provider.responses('openai/gpt-6-astra'),
     instructions,
     messages: [{ role: 'user', content: input }],
+    maxRetries: 0,
+    output: Output.object({ schema: complete ? z.object({
+      snapshot: z.string(), interests: z.array(z.string()), strengths: z.array(z.string()),
+      streams: z.array(z.string()), careers: z.array(z.string()), nextSteps: z.array(z.string()), alignment: z.string(),
+    }) : z.object({ question: z.string(), reflection: z.string() }) }),
     providerOptions: {
       openai: {
         store: false,
@@ -27,7 +33,6 @@ export async function generateAssessmentJson(apiKey: string, instructions: strin
       },
     },
   });
-  const text = await result.text;
-  if (!text.trim()) throw new Error('The assessment service returned an empty response.');
-  return text;
+  const output = await result.output;
+  return JSON.stringify(output);
 }
