@@ -163,13 +163,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <div className="space-y-2"><Label>{label}</Label>{children}</div>;
 }
 
+const selectClass = 'flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50';
+
 function ProfileScreen({ user, onSaved }: { user: User; onSaved: (profile: Profile) => void }) {
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
-  const [form, setForm] = useState({ student_name: '', parent_name: '', phone: '', category: '', school: '', area: '', city: '', state: '', board: '', principal_name: '', subjects: '', consent_confirmed: false });
+  const [form, setForm] = useState({ student_name: '', parent_name: '', phone: '', category: '', school: '', area: '', city: '', state: '', board: '', principal_name: '', consent_confirmed: false });
+  const [subjects, setSubjects] = useState<string[]>([]);
   const update = (key: keyof typeof form, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }));
+  const toggleSubject = (s: string) => setSubjects((cur) => cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]);
   async function submit(event: FormEvent) {
-    event.preventDefault(); setBusy(true); setError('');
-    const { data, error: saveError } = await supabase.from('student_profiles').insert({ ...form, user_id: user.id }).select().single();
+    event.preventDefault();
+    if (subjects.length === 0) { setError('Please select at least one subject.'); return; }
+    setBusy(true); setError('');
+    const { data, error: saveError } = await supabase.from('student_profiles').insert({ ...form, principal_name: form.principal_name.trim(), subjects: subjects.join(', '), user_id: user.id }).select().single();
     if (saveError) setError(saveError.message); else if (data) onSaved(data);
     setBusy(false);
   }
@@ -178,9 +184,17 @@ function ProfileScreen({ user, onSaved }: { user: User; onSaved: (profile: Profi
     <Field label="Student name"><Input required value={form.student_name} onChange={(e)=>update('student_name',e.target.value)}/></Field><Field label="Parent or guardian name"><Input required value={form.parent_name} onChange={(e)=>update('parent_name',e.target.value)}/></Field>
     <Field label="Phone number"><Input required type="tel" value={form.phone} onChange={(e)=>update('phone',e.target.value)} placeholder="For future account recovery"/></Field><Field label="Current class or year"><Input required value={form.category} onChange={(e)=>update('category',e.target.value)} placeholder="e.g. Class 10"/></Field>
     <Field label="School"><Input required value={form.school} onChange={(e)=>update('school',e.target.value)}/></Field><Field label="Board"><Input required value={form.board} onChange={(e)=>update('board',e.target.value)} placeholder="e.g. CBSE, ICSE, State Board"/></Field>
-    <Field label="Subjects"><Input value={form.subjects} onChange={(e)=>update('subjects',e.target.value)} placeholder="Mathematics, Biology, English…"/></Field><Field label="Principal name"><Input required value={form.principal_name} onChange={(e)=>update('principal_name',e.target.value)}/></Field>
-    <Field label="Area"><Input required value={form.area} onChange={(e)=>update('area',e.target.value)}/></Field><Field label="City"><Input required value={form.city} onChange={(e)=>update('city',e.target.value)}/></Field>
-    <Field label="State"><Input required value={form.state} onChange={(e)=>update('state',e.target.value)}/></Field>
+    <div className="space-y-2 sm:col-span-2"><Label>Subjects <span className="font-normal text-muted-foreground">(select all that apply)</span></Label>
+      <select className={selectClass} value="" onChange={(e)=>{ if (e.target.value) toggleSubject(e.target.value); }}>
+        <option value="">Add a subject…</option>
+        {SUBJECTS.filter((s)=>!subjects.includes(s)).map((s)=><option key={s} value={s}>{s}</option>)}
+      </select>
+      {subjects.length>0 && <div className="flex flex-wrap gap-2 pt-1">{subjects.map((s)=><button type="button" key={s} onClick={()=>toggleSubject(s)} className="inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground hover:bg-secondary/70" title="Remove">{s}<X className="size-3"/></button>)}</div>}
+    </div>
+    <Field label="Principal name (optional)"><Input value={form.principal_name} onChange={(e)=>update('principal_name',e.target.value)}/></Field>
+    <Field label="School area"><Input required value={form.area} onChange={(e)=>update('area',e.target.value)} placeholder="Locality where the school is"/></Field>
+    <Field label="State"><select required className={selectClass} value={form.state} onChange={(e)=>setForm((c)=>({...c,state:e.target.value,city:''}))}><option value="">Select state…</option>{STATES.map((s)=><option key={s} value={s}>{s}</option>)}</select></Field>
+    <Field label="City"><select required disabled={!form.state} className={selectClass} value={form.city} onChange={(e)=>update('city',e.target.value)}><option value="">{form.state ? 'Select city…' : 'Select a state first'}</option>{(STATE_CITIES[form.state] ?? []).map((c)=><option key={c} value={c}>{c}</option>)}<option value="Other">Other</option></select></Field>
     <label className="flex items-start gap-3 rounded-md bg-muted p-4 sm:col-span-2"><input type="checkbox" checked={form.consent_confirmed} onChange={(e)=>update('consent_confirmed',e.target.checked)} required className="mt-1 size-4 accent-primary"/><span className="text-sm leading-6">I am the student (if old enough to consent) or the parent/guardian, and I consent to using these details for career guidance.</span></label>
     {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}<Button className="sm:col-span-2 sm:justify-self-end" size="lg" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Continue to assessments'}<ArrowRight/></Button>
   </form></section></main>;
