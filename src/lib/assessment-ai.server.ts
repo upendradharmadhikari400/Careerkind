@@ -12,7 +12,7 @@ const reportSchema = z.object({
   nextSteps: z.array(z.string()),
   alignment: z.string(),
 });
-const questionSchema = z.object({ question: z.string(), reflection: z.string() });
+const questionSchema = z.object({ question: z.string(), options: z.array(z.string()), reflection: z.string() });
 
 function run(apiKey: string, instructions: string, input: string) {
   const runIdFetch = createLovableAiGatewayRunIdFetch();

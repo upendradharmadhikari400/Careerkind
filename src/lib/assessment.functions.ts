@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 type Reply = {
   question?: string;
+  options?: string[];
   reflection?: string;
   snapshot?: string;
   interests?: string[];
@@ -21,7 +22,7 @@ export const advanceAssessment = createServerFn({ method: 'POST' })
     z
       .object({
         assessmentId: z.string().uuid(),
-        answer: z.string().trim().min(2).max(1500),
+        answer: z.string().trim().min(1).max(300),
         question: z.string().trim().min(2).max(800),
       })
       .parse(input),
@@ -61,13 +62,13 @@ export const advanceAssessment = createServerFn({ method: 'POST' })
       .eq('user_id', context.userId);
     if (saveError) throw new Error('Could not save your answer.');
 
-    const complete = answers.length >= (assessment.mode === 'joint' ? 6 : 5);
+    const complete = answers.length >= (assessment.mode === 'joint' ? 12 : 10);
     const apiKey = process.env['LOVABLE_API_KEY'];
     if (!apiKey) throw new Error('AI counselling is temporarily unavailable. Your answer was saved.');
 
     const task = complete
       ? 'Create a concise BASIC career profile. Return ONLY valid JSON with keys snapshot (2 sentences), interests (3 strings), strengths (3 strings), streams (2-3 broad academic streams), careers (3 exploration areas), nextSteps (3 practical actions), alignment (one balanced sentence if joint, otherwise empty string). Do not include specific colleges, admissions, scholarships, deadlines, fees, or guaranteed outcomes. Reflect uncertainty. In joint mode, distinguish student and parent viewpoints without taking sides.'
-      : `Return ONLY valid JSON with keys question and reflection. Ask ONE specific, open-ended next question responding to the latest answer while exploring a different dimension: interests, personality, academic strengths versus marks, problem solving, work preferences, motivations, or constraints. In joint mode, the NEXT respondent is ${answers.length % 2 === 0 ? 'student' : 'parent'}; address them directly and fairly. reflection is one short supportive sentence. Do not diagnose or guarantee outcomes.`;
+      : `Return question, options and reflection. Ask ONE objective, multiple-choice, situational question (max 30 words) that adapts to the previous answers and reveals the respondent's psychological preferences and state of mind. Cover a different dimension each time, rotating through: personality (introversion/extroversion, independence, leadership, patience, risk tolerance, adaptability), cognitive style (analytical, creative, logical, pattern recognition), interests, work style (structured/flexible, team/independent, people/research), motivation, stress handling, academic confidence versus performance, and family or financial constraints. options: exactly 4 or 5 short, mutually exclusive, non-judgmental choices (max 14 words each), none clearly 'correct'. In joint mode, the NEXT respondent is ${answers.length % 2 === 0 ? 'student' : 'parent'}; address them directly and fairly. reflection is one short supportive sentence. Do not diagnose or guarantee outcomes.`;
 
     try {
       const { generateAssessmentJson } = await import('./assessment-ai.server');
@@ -86,16 +87,17 @@ export const advanceAssessment = createServerFn({ method: 'POST' })
           .eq('id', assessment.id)
           .eq('user_id', context.userId);
         if (error) throw error;
-        return { complete: true, question: '', reflection: '', result: parsed };
+        return { complete: true, question: '', options: [] as string[], reflection: '', result: parsed };
       }
-      if (!parsed.question) throw new Error('Invalid question');
+      if (!parsed.question || !parsed.options || parsed.options.length < 2) throw new Error('Invalid question');
       const { error: questionSaveError } = await context.supabase.from('assessments')
-        .update({ result: { question: parsed.question, reflection: parsed.reflection || '' }, updated_at: new Date().toISOString() })
+        .update({ result: { question: parsed.question, options: parsed.options ?? [], reflection: parsed.reflection || '' }, updated_at: new Date().toISOString() })
         .eq('id', assessment.id).eq('user_id', context.userId);
       if (questionSaveError) throw questionSaveError;
       return {
         complete: false,
         question: parsed.question,
+        options: parsed.options.slice(0, 6),
         reflection: parsed.reflection || '',
         result: null,
       };

@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { ArrowRight, BrainCircuit, Check, Compass, LogOut, Sparkles, Users, UserRound, Clock3, ShieldCheck, ChevronLeft } from 'lucide-react';
+import { X, ArrowRight, BrainCircuit, Check, Compass, LogOut, Sparkles, Users, UserRound, Clock3, ShieldCheck, ChevronLeft } from 'lucide-react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { advanceAssessment } from '@/lib/assessment.functions';
@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import studentImage from '@/assets/career-students.jpg.asset.json';
 import type { Database } from '@/integrations/supabase/types';
+import { SUBJECTS, STATES, STATE_CITIES } from '@/lib/india-data';
 
 type Profile = Database['public']['Tables']['student_profiles']['Row'];
 type Assessment = Database['public']['Tables']['assessments']['Row'];
@@ -25,11 +26,12 @@ const MODES: Array<{ mode: Mode; title: string; note: string; icon: typeof UserR
   { mode: 'joint', title: 'Parent + student', note: 'Surface agreement and bridge different preferences fairly.', icon: BrainCircuit, tone: 'bg-moss text-moss-foreground' },
 ];
 
-const firstQuestion = (mode: Mode, name: string) => {
-  if (mode === 'parent') return `Think of a recent moment when ${name} seemed deeply engaged or proud of their work. What were they doing, and what did you notice?`;
-  if (mode === 'joint') return `${name}, begin with an activity—inside or outside school—that makes you lose track of time. What draws you into it?`;
-  return `Think of an activity—inside or outside school—that makes you lose track of time. What are you doing, and what draws you into it?`;
+type Q = { question: string; options: string[] };
+const firstQuestion = (mode: Mode, name: string): Q => {
+  if (mode === 'parent') return { question: `When ${name} has free time, what do they most often choose to do?`, options: ['Build, fix or experiment with things', 'Read, write or explore ideas', 'Draw, design, play music or create', 'Spend time with friends or help others', 'Play sports or stay physically active', 'Organise, plan or manage something'] };
+  return { question: `${mode === 'joint' ? name + ', w' : 'W'}hen you have free time, which activity feels most natural to you?`, options: ['Building, fixing or experimenting with things', 'Reading, writing or exploring ideas', 'Drawing, designing, music or creating', 'Spending time with friends or helping others', 'Sports or physical activity', 'Organising, planning or leading something'] };
 };
+export const QUESTION_TOTAL = (mode: string) => (mode === 'joint' ? 12 : 10);
 
 export function CareerApp() {
   const [session, setSession] = useState<Session | null>(null);
@@ -37,7 +39,7 @@ export function CareerApp() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [active, setActive] = useState<Assessment | null>(null);
-  const [question, setQuestion] = useState('');
+  const [question, setQuestion] = useState<Q>({ question: '', options: [] });
   const [reflection, setReflection] = useState('');
   const [report, setReport] = useState<Report | null>(null);
 
@@ -83,7 +85,7 @@ export function CareerApp() {
   if (!session) return <AuthScreen />;
   if (!profile) return <ProfileScreen user={session.user} onSaved={setProfile} />;
   if (report) return <ReportScreen profile={profile} report={report} onDone={() => { setReport(null); setActive(null); void loadWorkspace(session.user); }} />;
-  if (active) return <AssessmentScreen assessment={active} profile={profile} initialQuestion={question} initialReflection={reflection} onQuestion={setQuestion} onReflection={setReflection} onReport={setReport} onExit={() => { setActive(null); setQuestion(''); setReflection(''); void loadWorkspace(session.user); }} />;
+  if (active) return <AssessmentScreen assessment={active} profile={profile} initialQuestion={question} initialReflection={reflection} onQuestion={setQuestion} onReflection={setReflection} onReport={setReport} onExit={() => { setActive(null); setQuestion({ question: '', options: [] }); setReflection(''); void loadWorkspace(session.user); }} />;
   return <Dashboard profile={profile} assessments={assessments} onStart={async (mode) => {
     const { data, error } = await supabase.from('assessments').insert({ user_id: session.user.id, mode, status: 'in_progress', answers: [] }).select().single();
     if (!error && data) {
@@ -96,8 +98,8 @@ export function CareerApp() {
     if (assessment.status === 'complete' && result) setReport(result);
     else {
       setActive(assessment);
-      const saved = assessment.result as { question?: string; reflection?: string } | null;
-      setQuestion(saved?.question ?? firstQuestion(assessment.mode as Mode, profile.student_name));
+      const saved = assessment.result as { question?: string; options?: string[]; reflection?: string } | null;
+      setQuestion(saved?.question && saved.options?.length ? { question: saved.question, options: saved.options } : firstQuestion(assessment.mode as Mode, profile.student_name));
       setReflection(saved?.reflection ?? '');
     }
   }} onSignOut={() => void supabase.auth.signOut()} />;
@@ -213,11 +215,11 @@ function Dashboard({ profile, assessments, onStart, onOpen, onSignOut }: { profi
 
 function Stat({value,label}:{value:string;label:string}) { return <div><div className="text-2xl font-extrabold">{value}</div><div className="mt-1 text-xs text-muted-foreground">{label}</div></div> }
 
-function AssessmentScreen({ assessment, profile, initialQuestion, initialReflection, onQuestion, onReflection, onReport, onExit }: { assessment: Assessment; profile: Profile; initialQuestion: string; initialReflection: string; onQuestion: (s:string)=>void; onReflection:(s:string)=>void; onReport:(r:Report)=>void; onExit:()=>void }) {
+function AssessmentScreen({ assessment, profile, initialQuestion, initialReflection, onQuestion, onReflection, onReport, onExit }: { assessment: Assessment; profile: Profile; initialQuestion: Q; initialReflection: string; onQuestion: (q:Q)=>void; onReflection:(s:string)=>void; onReport:(r:Report)=>void; onExit:()=>void }) {
   const advance = useServerFn(advanceAssessment); const [answer,setAnswer]=useState(''); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
-  const [count, setCount] = useState(Array.isArray(assessment.answers) ? assessment.answers.length : 0); const total=assessment.mode==='joint'?6:5; const nextRole=assessment.mode==='joint'?(count%2===0?'Student':'Parent'):assessment.mode==='parent'?'Parent':'Student';
-  async function submit(event:FormEvent){event.preventDefault(); if(!answer.trim())return; setBusy(true);setError('');try{const response=await advance({data:{assessmentId:assessment.id,question:initialQuestion,answer}});setAnswer('');setCount(current=>current+1);if(response.complete&&response.result)onReport(response.result);else{onQuestion(response.question);onReflection(response.reflection);}}catch(err){setError(err instanceof Error?err.message:'Your answer was saved, but the next question could not be prepared.');}finally{setBusy(false)}}
-  return <main className="min-h-screen bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-4xl items-center justify-between px-5"><Brand/><Button variant="ghost" onClick={onExit}><ChevronLeft/>Save & exit</Button></div></header><section className="mx-auto grid max-w-4xl gap-10 px-5 py-10 lg:grid-cols-[1fr_220px]"><div><div className="flex items-center justify-between"><Badge variant="secondary">{MODES.find(m=>m.mode===assessment.mode)?.title}</Badge><span className="text-xs text-muted-foreground">Question {Math.min(count+1,total)} of about {total}</span></div><Progress className="mt-4" value={(count/total)*100}/>{initialReflection&&<div className="mt-8 border-l-2 border-primary bg-secondary/60 px-4 py-3 text-sm leading-6 text-secondary-foreground">{initialReflection}</div>}<p className="mt-10 text-xs font-bold uppercase text-primary">For the {nextRole.toLowerCase()}</p><h1 className="mt-3 text-2xl font-extrabold leading-snug sm:text-3xl">{initialQuestion}</h1><form onSubmit={submit} className="mt-7"><Textarea value={answer} onChange={(e)=>setAnswer(e.target.value)} placeholder="Share what comes to mind. There are no right or wrong answers." className="min-h-40 resize-none bg-card p-4 text-base" maxLength={1500}/><div className="mt-3 flex items-center justify-between"><span className="text-xs text-muted-foreground">{answer.length}/1500</span><Button size="lg" type="submit" disabled={busy||answer.trim().length<2}>{busy?'Thinking about your answer…':'Continue'}{!busy&&<ArrowRight/>}</Button></div>{error&&<p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}</form></div><aside className="border-t pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"><ShieldCheck className="size-5 text-primary"/><h2 className="mt-3 text-sm font-bold">A safe exploration</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">The AI explores patterns, not labels. It will not choose a career for {profile.student_name} or promise an outcome.</p><div className="mt-6 border-t pt-5"><p className="text-xs font-semibold">You can pause anytime.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Every submitted answer is saved to this account.</p></div></aside></section></main>;
+  const [count, setCount] = useState(Array.isArray(assessment.answers) ? assessment.answers.length : 0); const total=QUESTION_TOTAL(assessment.mode); const nextRole=assessment.mode==='joint'?(count%2===0?'Student':'Parent'):assessment.mode==='parent'?'Parent':'Student';
+  async function submit(event:FormEvent){event.preventDefault(); if(!answer.trim())return; setBusy(true);setError('');try{const response=await advance({data:{assessmentId:assessment.id,question:initialQuestion.question,answer}});setAnswer('');setCount(current=>current+1);if(response.complete&&response.result)onReport(response.result);else{onQuestion({question:response.question,options:response.options});onReflection(response.reflection);}}catch(err){setError(err instanceof Error?err.message:'Your answer was saved, but the next question could not be prepared.');}finally{setBusy(false)}}
+  return <main className="min-h-screen bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-4xl items-center justify-between px-5"><Brand/><Button variant="ghost" onClick={onExit}><ChevronLeft/>Save & exit</Button></div></header><section className="mx-auto grid max-w-4xl gap-10 px-5 py-10 lg:grid-cols-[1fr_220px]"><div><div className="flex items-center justify-between"><Badge variant="secondary">{MODES.find(m=>m.mode===assessment.mode)?.title}</Badge><span className="text-xs text-muted-foreground">Question {Math.min(count+1,total)} of {total}</span></div><Progress className="mt-4" value={(count/total)*100}/>{initialReflection&&<div className="mt-8 border-l-2 border-primary bg-secondary/60 px-4 py-3 text-sm leading-6 text-secondary-foreground">{initialReflection}</div>}<p className="mt-10 text-xs font-bold uppercase text-primary">For the {nextRole.toLowerCase()}</p><h1 className="mt-3 text-2xl font-extrabold leading-snug sm:text-3xl">{initialQuestion.question}</h1><form onSubmit={submit} className="mt-7"><p className="text-xs text-muted-foreground">Choose the option that best matches how you honestly feel — there are no right or wrong answers.</p><div role="radiogroup" className="mt-4 grid gap-2.5">{initialQuestion.options.map((opt,i)=>{const on=answer===opt;return <button type="button" role="radio" aria-checked={on} key={opt} onClick={()=>setAnswer(opt)} className={`flex items-center gap-3 rounded-md border p-4 text-left text-sm transition ${on?'border-primary bg-secondary text-secondary-foreground':'bg-card hover:border-primary/60'}`}><span className={`grid size-6 shrink-0 place-items-center rounded-full border text-xs font-bold ${on?'border-primary bg-primary text-primary-foreground':'text-muted-foreground'}`}>{String.fromCharCode(65+i)}</span>{opt}</button>})}</div><div className="mt-5 flex justify-end"><Button size="lg" type="submit" disabled={busy||!answer}>{busy?'Preparing next question…':'Continue'}{!busy&&<ArrowRight/>}</Button></div>{error&&<p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}</form></div><aside className="border-t pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"><ShieldCheck className="size-5 text-primary"/><h2 className="mt-3 text-sm font-bold">A safe exploration</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">The AI explores patterns, not labels. It will not choose a career for {profile.student_name} or promise an outcome.</p><div className="mt-6 border-t pt-5"><p className="text-xs font-semibold">You can pause anytime.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Every submitted answer is saved to this account.</p></div></aside></section></main>;
 }
 
 function ReportScreen({profile,report,onDone}:{profile:Profile;report:Report;onDone:()=>void}) {
