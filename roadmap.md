@@ -1,5 +1,6 @@
 # Career counselling app
-- [ ] Integrate premium counselling with Dr. Saurabh Shah Sir: post-assessment invitation, verified paid access, private saved chat, source-backed guidance and saved reports.
+- [x] Add the post-assessment premium invitation, existing mode prices, AI disclosure and explicit unavailable-checkout state.
+- [ ] Unlock one ongoing private premium AI conversation and saved reports — blocked on Razorpay merchant setup and reliable live source retrieval configuration; no simulated paid access.
 - [x] Build private profiles, sign-in, and saved free assessments.
 - [x] Add adaptive AI questions and a basic report for student, parent, and joint modes.
 - [ ] Razorpay checkout and coupon administration — blocked on merchant account and payment integration setup.
