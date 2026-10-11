@@ -14,7 +14,7 @@ describe('Premium counselling invitation', () => {
 
   it('discloses AI identity and unavailable checkout without unlocking chat', () => {
     render(<PremiumInvitation mode="joint" onViewResults={() => undefined} />);
-    expect(screen.getByText(/not a human/)).toBeTruthy();
+    expect(screen.getByText('AI-powered Career Counsellor')).toBeTruthy();
     expect(screen.getByText('₹2,999')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start My Personal Career Counselling' }));
     expect(screen.getByRole('status').textContent).toContain('you have not been charged');

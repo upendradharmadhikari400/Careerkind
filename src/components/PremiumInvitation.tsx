@@ -21,7 +21,7 @@ export function PremiumInvitation({ mode, onViewResults }: { mode: string; onVie
       <h1 id="premium-title" className="mt-5 max-w-3xl text-3xl font-extrabold leading-tight sm:text-4xl">Your Assessment Is Complete. Let’s Plan Your Future!</h1>
       <div className="mt-7 flex items-start gap-4">
         <div className="grid size-12 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"><Compass className="size-6" /></div>
-        <div><h2 className="text-xl font-extrabold">{COUNSELLOR_NAME}</h2><p className="mt-1 text-sm font-semibold text-primary">AI-powered virtual career counsellor · not a human</p></div>
+        <div><h2 className="text-xl font-extrabold">{COUNSELLOR_NAME}</h2><p className="mt-1 text-sm font-semibold text-primary">AI-powered Career Counsellor</p></div>
       </div>
       <p className="mt-4 max-w-3xl text-sm leading-7 text-ink-soft">Turn your assessment insights into a thoughtful education and career plan with a supportive AI mentor, built around your interests, subjects and family priorities.</p>
       <div className="mt-8 grid gap-x-8 gap-y-6 sm:grid-cols-2">{benefits.map(({ icon: Icon, title, detail }) => <div key={title} className="flex gap-3"><Icon className="mt-1 size-5 shrink-0 text-primary" /><div><h3 className="text-sm font-bold">{title}</h3><p className="mt-1 text-sm leading-6 text-muted-foreground">{detail}</p></div></div>)}</div>
