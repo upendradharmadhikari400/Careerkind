@@ -1,9 +1,9 @@
 export const COUNSELLOR_NAME = 'Dr. Saurabh Shah Sir';
 
 export const COUNSELLING_PLANS = {
-  student: { label: 'Student solo', price: 1499 },
-  parent: { label: 'Parent solo', price: 1499 },
-  joint: { label: 'Parent + student', price: 2999 },
+  student: { label: 'Student solo', price: 2499, discountPrice: 1499 },
+  parent: { label: 'Parent solo', price: 2499, discountPrice: 1499 },
+  joint: { label: 'Parent + student', price: 2499, discountPrice: 1499 },
 } as const;
 
 export function counsellingPlan(mode: string) {
@@ -13,4 +13,7 @@ export function counsellingPlan(mode: string) {
 
 export function counsellingPrice(mode: string) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(counsellingPlan(mode).price);
+}
+export function counsellingDiscountPrice(mode: string) {
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(counsellingPlan(mode).discountPrice);
 }
