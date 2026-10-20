@@ -18,7 +18,7 @@ type Profile = Database['public']['Tables']['student_profiles']['Row'];
 type Assessment = Database['public']['Tables']['assessments']['Row'];
 type Mode = 'student' | 'parent' | 'joint';
 type Report = { snapshot?: string; interests?: string[]; strengths?: string[]; streams?: string[]; careers?: string[]; nextSteps?: string[]; alignment?: string };
-type AuthView = 'signin' | 'signup';
+type AuthView = 'signin' | 'signup' | 'forgot';
 
 const MODES: Array<{ mode: Mode; title: string; note: string; icon: typeof UserRound; tone: string }> = [
   { mode: 'student', title: 'Student solo', note: 'Explore strengths, interests and work preferences.', icon: UserRound, tone: 'bg-sky text-sky-foreground' },
@@ -123,7 +123,10 @@ function AuthScreen() {
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setMessage('');
-    if (view === 'signup') {
+    if (view === 'forgot') {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+      setMessage(error?.message ?? "If an account exists for this email, we've sent a reset link. Please check your inbox and spam folder.");
+    } else if (view === 'signup') {
       const { data, error } = await supabase.auth.signUp({ email, password });
       setMessage(error?.message ?? (data.session ? 'Account created.' : 'Check your email to confirm your account, then sign in.'));
     } else {
@@ -147,14 +150,19 @@ function AuthScreen() {
       </div>
       <div className="mx-auto w-full max-w-md py-8">
         <p className="text-xs font-bold uppercase text-primary">Private by design</p>
-        <h2 className="mt-3 text-3xl font-extrabold">{view === 'signin' ? 'Welcome back' : 'Create your family account'}</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">One account supports one student profile and keeps every assessment in one place.</p>
-        <div className="mt-7 grid grid-cols-2 border-b"><button type="button" onClick={() => {setView('signin'); setMessage('');}} className={`border-b-2 px-3 py-3 text-sm font-semibold ${view === 'signin' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>Sign in</button><button type="button" onClick={() => {setView('signup'); setMessage('');}} className={`border-b-2 px-3 py-3 text-sm font-semibold ${view === 'signup' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>Create account</button></div>
+        <h2 className="mt-3 text-3xl font-extrabold">{view === 'forgot' ? 'Reset your password' : view === 'signin' ? 'Welcome back' : 'Create your family account'}</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{view === 'forgot' ? 'Enter your email and we’ll send a secure link to set a new password.' : 'One account supports one student profile and keeps every assessment in one place.'}</p>
+        {view === 'forgot' ? (
+          <button type="button" onClick={() => { setView('signin'); setMessage(''); }} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"><ChevronLeft className="size-4" />Back to sign in</button>
+        ) : (
+          <div className="mt-7 grid grid-cols-2 border-b"><button type="button" onClick={() => {setView('signin'); setMessage('');}} className={`border-b-2 px-3 py-3 text-sm font-semibold ${view === 'signin' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>Sign in</button><button type="button" onClick={() => {setView('signup'); setMessage('');}} className={`border-b-2 px-3 py-3 text-sm font-semibold ${view === 'signup' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>Create account</button></div>
+        )}
         <form onSubmit={submit} className="mt-7 space-y-5">
           <Field label="Email address"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" /></Field>
-          <Field label="Password"><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete={view === 'signin' ? 'current-password' : 'new-password'} placeholder="At least 8 characters" /></Field>
+          {view !== 'forgot' && <Field label="Password"><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete={view === 'signin' ? 'current-password' : 'new-password'} placeholder="At least 8 characters" /></Field>}
+          {view === 'signin' && <div className="text-right"><button type="button" onClick={() => { setView('forgot'); setMessage(''); }} className="text-xs font-semibold text-primary hover:underline">Forgot password?</button></div>}
           {message && <p role="status" className="rounded-md bg-muted px-3 py-2 text-sm text-ink-soft">{message}</p>}
-          <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? 'Please wait…' : view === 'signin' ? 'Sign in' : 'Create account'}<ArrowRight/></Button>
+          <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? 'Please wait…' : view === 'forgot' ? 'Send reset link' : view === 'signin' ? 'Sign in' : 'Create account'}<ArrowRight/></Button>
         </form>
         <div className="mt-7 flex gap-3 border-t pt-6 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary"/><p>Career guidance is decision support, not a guarantee. A parent or guardian should supervise younger students.</p></div>
       </div>
