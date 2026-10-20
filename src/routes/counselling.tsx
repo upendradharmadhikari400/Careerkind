@@ -42,7 +42,7 @@ function CounsellingPage() {
       ]);
       if (cancelled) return;
       if (!profile || !count) return setState({ kind: 'needsAssessment' });
-      setState({ kind: 'ready', firstName: profile.student_name.split(' ')[0], messages: (rows ?? []).map((r) => ({ id: r.id, role: r.role as 'user' | 'assistant', parts: r.parts as UIMessage['parts'] })) });
+      setState({ kind: 'ready', firstName: profile.student_name.split(' ')[0] ?? profile.student_name, messages: (rows ?? []).map((r) => ({ id: r.id, role: r.role as 'user' | 'assistant', parts: r.parts as UIMessage['parts'] })) });
     })();
     return () => { cancelled = true; };
   }, []);
