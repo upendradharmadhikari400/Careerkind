@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { X, ArrowRight, BrainCircuit, Check, Compass, LogOut, Sparkles, Users, UserRound, Clock3, ShieldCheck, ChevronLeft } from 'lucide-react';

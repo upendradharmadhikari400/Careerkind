@@ -15,9 +15,10 @@ async function renderInvitation(mode: string, onViewResults = () => undefined) {
 
 describe('Premium counselling invitation', () => {
   it('preserves solo and joint prices', () => {
-    expect(counsellingPlan('student').price).toBe(1499);
-    expect(counsellingPlan('parent').price).toBe(1499);
-    expect(counsellingPlan('joint').price).toBe(2999);
+    for (const m of ['student', 'parent', 'joint']) {
+      expect(counsellingPlan(m).price).toBe(2499);
+      expect(counsellingPlan(m).discountPrice).toBe(1499);
+    }
   });
 
   it('opens counselling for free during early access', async () => {
