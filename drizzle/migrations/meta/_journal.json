@@ -8,6 +8,13 @@
       "when": 1791098078076,
       "tag": "0000_career_profiles_assessments",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792512806683,
+      "tag": "0001_counselling_messages",
+      "breakpoints": true
     }
   ]
 }

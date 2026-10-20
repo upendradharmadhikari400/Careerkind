@@ -1,9 +1,17 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryHistory, createRootRoute, createRouter, RouterProvider } from '@tanstack/react-router';
 import { PremiumInvitation } from '@/components/PremiumInvitation';
 import { counsellingPlan } from '@/lib/counselling-config';
 
 afterEach(cleanup);
+
+async function renderInvitation(mode: string, onViewResults = () => undefined) {
+  const rootRoute = createRootRoute({ component: () => <PremiumInvitation mode={mode} onViewResults={onViewResults} /> });
+  const router = createRouter({ routeTree: rootRoute, history: createMemoryHistory({ initialEntries: ['/'] }) });
+  render(<RouterProvider router={router} />);
+  await screen.findByText('AI-powered Career Counsellor');
+}
 
 describe('Premium counselling invitation', () => {
   it('preserves solo and joint prices', () => {
@@ -12,18 +20,15 @@ describe('Premium counselling invitation', () => {
     expect(counsellingPlan('joint').price).toBe(2999);
   });
 
-  it('discloses AI identity and unavailable checkout without unlocking chat', () => {
-    render(<PremiumInvitation mode="joint" onViewResults={() => undefined} />);
-    expect(screen.getByText('AI-powered Career Counsellor')).toBeTruthy();
-    expect(screen.getByText('₹2,999')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Start My Personal Career Counselling' }));
-    expect(screen.getByRole('status').textContent).toContain('you have not been charged');
-    expect(screen.queryByRole('textbox')).toBeNull();
+  it('opens counselling for free during early access', async () => {
+    await renderInvitation('joint');
+    const link = screen.getByRole('link', { name: 'Start My Personal Career Counselling' });
+    expect(link.getAttribute('href')).toBe('/counselling');
   });
 
-  it('keeps the free results accessible', () => {
+  it('keeps the free results accessible', async () => {
     const onViewResults = vi.fn();
-    render(<PremiumInvitation mode="student" onViewResults={onViewResults} />);
+    await renderInvitation('student', onViewResults);
     fireEvent.click(screen.getByRole('button', { name: 'View My Free Assessment Results' }));
     expect(onViewResults).toHaveBeenCalledOnce();
   });

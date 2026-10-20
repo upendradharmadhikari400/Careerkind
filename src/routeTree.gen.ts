@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CounsellingRouteImport } from './routes/counselling'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ApiCounsellingRouteImport } from './routes/api/counselling'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CounsellingRoute = CounsellingRouteImport.update({
+  id: '/counselling',
+  path: '/counselling',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -22,31 +29,44 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCounsellingRoute = ApiCounsellingRouteImport.update({
+  id: '/api/counselling',
+  path: '/api/counselling',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/counselling': typeof CounsellingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/counselling': typeof ApiCounsellingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/counselling': typeof CounsellingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/counselling': typeof ApiCounsellingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/counselling': typeof CounsellingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/counselling': typeof ApiCounsellingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/reset-password'
+  fullPaths: '/' | '/counselling' | '/reset-password' | '/api/counselling'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/reset-password'
-  id: '__root__' | '/' | '/reset-password'
+  to: '/' | '/counselling' | '/reset-password' | '/api/counselling'
+  id: '__root__' | '/' | '/counselling' | '/reset-password' | '/api/counselling'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CounsellingRoute: typeof CounsellingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiCounsellingRoute: typeof ApiCounsellingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/counselling': {
+      id: '/counselling'
+      path: '/counselling'
+      fullPath: '/counselling'
+      preLoaderRoute: typeof CounsellingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -65,12 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/counselling': {
+      id: '/api/counselling'
+      path: '/api/counselling'
+      fullPath: '/api/counselling'
+      preLoaderRoute: typeof ApiCounsellingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CounsellingRoute: CounsellingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiCounsellingRoute: ApiCounsellingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

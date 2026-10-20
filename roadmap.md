@@ -1,6 +1,7 @@
 # Career counselling app
 - [x] Add the post-assessment premium invitation, existing mode prices, AI disclosure and explicit unavailable-checkout state.
-- [ ] Unlock one ongoing private premium AI conversation and saved reports — blocked on Razorpay merchant setup and reliable live source retrieval configuration; no simulated paid access.
+- [x] Open one ongoing private AI counselling conversation (free early access until Razorpay is set up).
+- [ ] Live source retrieval for education facts and saved counselling reports — needs a search/data source.
 - [x] Build private profiles, sign-in, and saved free assessments.
 - [x] Add adaptive AI questions and a basic report for student, parent, and joint modes.
 - [ ] Razorpay checkout and coupon administration — blocked on merchant account and payment integration setup.
