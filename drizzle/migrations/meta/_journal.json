@@ -15,6 +15,13 @@
       "when": 1792512806683,
       "tag": "0001_counselling_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792590721389,
+      "tag": "0002_official_source_registry",
+      "breakpoints": true
     }
   ]
 }
