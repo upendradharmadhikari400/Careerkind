@@ -14,6 +14,8 @@ import studentImage from '@/assets/career-students.jpg.asset.json';
 import type { Database } from '@/integrations/supabase/types';
 import { SUBJECTS, STATES, STATE_CITIES } from '@/lib/india-data';
 import { PremiumInvitation } from '@/components/PremiumInvitation';
+import { Brand } from '@/components/Brand';
+import { SiteFooter } from '@/components/SiteFooter';
 
 type Profile = Database['public']['Tables']['student_profiles']['Row'];
 type Assessment = Database['public']['Tables']['assessments']['Row'];
@@ -107,9 +109,6 @@ export function CareerApp() {
   }} onSignOut={() => void supabase.auth.signOut()} />;
 }
 
-function Brand() {
-  return <div className="flex items-center gap-2.5"><div className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground"><Compass className="size-5" /></div><div><div className="font-display text-base font-extrabold leading-none">CareerKind</div><div className="mt-1 text-[10px] font-bold uppercase text-muted-foreground">AI career intelligence</div></div></div>;
-}
 
 function LoadingScreen() {
   return <main className="grid min-h-screen place-items-center bg-background"><div className="text-center"><Compass className="mx-auto size-8 animate-pulse text-primary"/><p className="mt-3 text-sm text-muted-foreground">Preparing your workspace…</p></div></main>;
@@ -168,6 +167,7 @@ function AuthScreen() {
         <div className="mt-7 flex gap-3 border-t pt-6 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary"/><p>Career guidance is decision support, not a guarantee. A parent or guardian should supervise younger students.</p></div>
       </div>
     </section>
+    <SiteFooter />
   </main>;
 }
 
@@ -209,7 +209,7 @@ function ProfileScreen({ user, onSaved }: { user: User; onSaved: (profile: Profi
     <Field label="City"><select required disabled={!form.state} className={selectClass} value={form.city} onChange={(e)=>update('city',e.target.value)}><option value="">{form.state ? 'Select city…' : 'Select a state first'}</option>{(STATE_CITIES[form.state] ?? []).map((c)=><option key={c} value={c}>{c}</option>)}<option value="Other">Other</option></select></Field>
     <label className="flex items-start gap-3 rounded-md bg-muted p-4 sm:col-span-2"><input type="checkbox" checked={form.consent_confirmed} onChange={(e)=>update('consent_confirmed',e.target.checked)} required className="mt-1 size-4 accent-primary"/><span className="text-sm leading-6">I am the student (if old enough to consent) or the parent/guardian, and I consent to using these details for career guidance.</span></label>
     {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}<Button className="sm:col-span-2 sm:justify-self-end" size="lg" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Continue to assessments'}<ArrowRight/></Button>
-  </form></section></main>;
+  </form></section><SiteFooter /></main>;
 }
 
 function Dashboard({ profile, assessments, onStart, onOpen, onSignOut }: { profile: Profile; assessments: Assessment[]; onStart: (mode: Mode) => void; onOpen: (item: Assessment) => void; onSignOut: () => void }) {
@@ -220,7 +220,7 @@ function Dashboard({ profile, assessments, onStart, onOpen, onSignOut }: { profi
   <div className="mt-6 grid gap-4 lg:grid-cols-3">{MODES.map(({mode,title,note,icon:Icon,tone})=><button key={mode} onClick={()=>onStart(mode)} className="group flex min-h-56 flex-col border bg-card p-6 text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"><div className={`grid size-11 place-items-center rounded-md ${tone}`}><Icon/></div><h3 className="mt-6 text-xl font-extrabold">{title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{note}</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary">Begin assessment <ArrowRight className="size-4 transition group-hover:translate-x-1"/></span></button>)}</div>
   <div className="mt-12 flex items-center justify-between border-b pb-4"><h2 className="text-xl font-extrabold">Assessment history</h2><span className="text-xs text-muted-foreground">Saved privately</span></div>
   {assessments.length === 0 ? <div className="py-14 text-center"><Clock3 className="mx-auto size-7 text-muted-foreground"/><p className="mt-3 text-sm text-muted-foreground">Your completed and in-progress assessments will appear here.</p></div> : <div className="divide-y">{assessments.map((item)=>{ const mode=MODES.find(m=>m.mode===item.mode); const Icon=mode?.icon ?? Compass; return <button key={item.id} onClick={()=>onOpen(item)} className="flex w-full items-center gap-4 py-5 text-left transition hover:bg-muted/50"><div className="grid size-10 place-items-center rounded-md bg-muted"><Icon className="size-5"/></div><div className="min-w-0 flex-1"><p className="font-semibold">{mode?.title ?? item.mode}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</p></div><Badge variant={item.status==='complete'?'secondary':'outline'}>{item.status==='complete'?'Profile ready':'In progress'}</Badge><ArrowRight className="size-4 text-muted-foreground"/></button>})}</div>}
-  </section></main>;
+  </section><SiteFooter /></main>;
 }
 
 function Stat({value,label}:{value:string;label:string}) { return <div><div className="text-2xl font-extrabold">{value}</div><div className="mt-1 text-xs text-muted-foreground">{label}</div></div> }
@@ -234,5 +234,5 @@ function AssessmentScreen({ assessment, profile, initialQuestion, initialReflect
 
 function ReportScreen({profile,report,mode,onDone}:{profile:Profile;report:Report;mode:string;onDone:()=>void}) {
  const groups=[['Interest signals',report.interests],['Strength signals',report.strengths],['Broad streams to explore',report.streams],['Career areas to investigate',report.careers]] as const;
- return <main className="min-h-screen bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onDone}>Back to workspace</Button></div></header><PremiumInvitation mode={mode} onViewResults={() => document.getElementById("free-results")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })} /><section id="free-results" className="mx-auto max-w-5xl scroll-mt-6 px-5 py-10"><Badge className="bg-moss text-moss-foreground"><Check/>Basic career profile ready</Badge><h2 className="mt-5 max-w-3xl text-3xl font-extrabold sm:text-4xl">A starting point for {profile.student_name}’s exploration</h2><p className="mt-4 max-w-3xl text-base leading-7 text-ink-soft">{report.snapshot}</p><div className="mt-10 grid gap-px overflow-hidden border bg-border sm:grid-cols-2">{groups.map(([title,items])=><div key={title} className="bg-card p-6"><h2 className="text-sm font-bold uppercase text-muted-foreground">{title}</h2><ul className="mt-4 space-y-3">{items?.map(item=><li key={item} className="flex gap-3 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary"/>{item}</li>)}</ul></div>)}</div>{report.alignment&&<div className="mt-6 border-l-2 border-primary bg-secondary p-5"><h2 className="text-sm font-bold">Preference alignment</h2><p className="mt-2 text-sm leading-6">{report.alignment}</p></div>}<div className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-2xl text-xs leading-5 text-muted-foreground">This profile reflects assessment responses and AI analysed interpretation. It supports family decisions; it does not guarantee suitability, admission or career outcomes.</p><Button asChild size="lg" className="h-auto min-h-11 whitespace-normal"><Link to="/counselling">Start My Personal Career Counselling<ArrowRight/></Link></Button></div></section></main>
+ return <main className="min-h-screen bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onDone}>Back to workspace</Button></div></header><PremiumInvitation mode={mode} onViewResults={() => document.getElementById("free-results")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })} /><section id="free-results" className="mx-auto max-w-5xl scroll-mt-6 px-5 py-10"><Badge className="bg-moss text-moss-foreground"><Check/>Basic career profile ready</Badge><h2 className="mt-5 max-w-3xl text-3xl font-extrabold sm:text-4xl">A starting point for {profile.student_name}’s exploration</h2><p className="mt-4 max-w-3xl text-base leading-7 text-ink-soft">{report.snapshot}</p><div className="mt-10 grid gap-px overflow-hidden border bg-border sm:grid-cols-2">{groups.map(([title,items])=><div key={title} className="bg-card p-6"><h2 className="text-sm font-bold uppercase text-muted-foreground">{title}</h2><ul className="mt-4 space-y-3">{items?.map(item=><li key={item} className="flex gap-3 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary"/>{item}</li>)}</ul></div>)}</div>{report.alignment&&<div className="mt-6 border-l-2 border-primary bg-secondary p-5"><h2 className="text-sm font-bold">Preference alignment</h2><p className="mt-2 text-sm leading-6">{report.alignment}</p></div>}<div className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-2xl text-xs leading-5 text-muted-foreground">This profile reflects assessment responses and AI analysed interpretation. It supports family decisions; it does not guarantee suitability, admission or career outcomes.</p><Button asChild size="lg" className="h-auto min-h-11 whitespace-normal"><Link to="/counselling">Start My Personal Career Counselling<ArrowRight/></Link></Button></div></section><SiteFooter /></main>
 }
