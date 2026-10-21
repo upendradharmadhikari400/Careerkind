@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import studentImage from '@/assets/career-students.jpg.asset.json';
 import type { Database } from '@/integrations/supabase/types';
-import { SUBJECTS, STATES, STATE_CITIES } from '@/lib/india-data';
+import { SUBJECTS, STATES, STATE_CITIES, CLASS_OPTIONS } from '@/lib/india-data';
 import { PremiumInvitation } from '@/components/PremiumInvitation';
 import { Brand } from '@/components/Brand';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -45,6 +45,7 @@ export function CareerApp() {
   const [question, setQuestion] = useState<Q>({ question: '', options: [] });
   const [reflection, setReflection] = useState('');
   const [report, setReport] = useState<Report | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -89,8 +90,9 @@ export function CareerApp() {
   if (!session) return <AuthScreen />;
   if (!profile) return <ProfileScreen user={session.user} onSaved={setProfile} />;
   if (report) return <ReportScreen profile={profile} report={report} mode={active?.mode ?? 'student'} onDone={() => { setReport(null); setActive(null); void loadWorkspace(session.user); }} />;
+  if (showProfile) return <ProfileView profile={profile} onBack={() => setShowProfile(false)} onUpdated={setProfile} />;
   if (active) return <AssessmentScreen assessment={active} profile={profile} initialQuestion={question} initialReflection={reflection} onQuestion={setQuestion} onReflection={setReflection} onReport={setReport} onExit={() => { setActive(null); setQuestion({ question: '', options: [] }); setReflection(''); void loadWorkspace(session.user); }} />;
-  return <Dashboard profile={profile} assessments={assessments} onStart={async (mode) => {
+  return <Dashboard profile={profile} assessments={assessments} onProfile={() => setShowProfile(true)} onStart={async (mode) => {
     const { data, error } = await supabase.from('assessments').insert({ user_id: session.user.id, mode, status: 'in_progress', answers: [] }).select().single();
     if (!error && data) {
       setActive(data);
@@ -194,7 +196,7 @@ function ProfileScreen({ user, onSaved }: { user: User; onSaved: (profile: Profi
   return <main className="flex min-h-screen flex-col bg-background"><header className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="ghost" onClick={() => void supabase.auth.signOut()}><LogOut/>Sign out</Button></header><section className="mx-auto max-w-3xl flex-1 px-5 pb-16 pt-8"><div className="flex items-start gap-4"><div className="grid size-12 shrink-0 place-items-center rounded-md bg-moss text-moss-foreground"><UserRound/></div><div><p className="text-xs font-bold uppercase text-primary">Step 1 of 1</p><h1 className="mt-2 text-3xl font-extrabold">Tell us about the student</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">This creates the single student profile linked to this account. The AI uses it only to make questions more relevant.</p></div></div>
   <form onSubmit={submit} className="mt-10 grid gap-5 border-t pt-8 sm:grid-cols-2">
     <Field label="Student name"><Input required value={form.student_name} onChange={(e)=>update('student_name',e.target.value)}/></Field><Field label="Parent or guardian name"><Input required value={form.parent_name} onChange={(e)=>update('parent_name',e.target.value)}/></Field>
-    <Field label="Phone number"><Input required type="tel" value={form.phone} onChange={(e)=>update('phone',e.target.value)} placeholder="For future account recovery"/></Field><Field label="Current class or year"><Input required value={form.category} onChange={(e)=>update('category',e.target.value)} placeholder="e.g. Class 10"/></Field>
+    <Field label="Phone number"><Input required type="tel" value={form.phone} onChange={(e)=>update('phone',e.target.value)} placeholder="For future account recovery"/></Field><Field label="Current class or year"><select required className={selectClass} value={form.category} onChange={(e)=>update('category',e.target.value)}><option value="">Select class…</option>{CLASS_OPTIONS.map((c)=><option key={c} value={c}>{c}</option>)}</select></Field>
     <Field label="School"><Input required value={form.school} onChange={(e)=>update('school',e.target.value)}/></Field><Field label="Board"><Input required value={form.board} onChange={(e)=>update('board',e.target.value)} placeholder="e.g. CBSE, ICSE, State Board"/></Field>
     <div className="space-y-2 sm:col-span-2"><Label>Subjects <span className="font-normal text-muted-foreground">(select all that apply)</span></Label>
       <select className={selectClass} value="" onChange={(e)=>{ if (e.target.value) toggleSubject(e.target.value); }}>
@@ -212,9 +214,9 @@ function ProfileScreen({ user, onSaved }: { user: User; onSaved: (profile: Profi
   </form></section><SiteFooter /></main>;
 }
 
-function Dashboard({ profile, assessments, onStart, onOpen, onSignOut }: { profile: Profile; assessments: Assessment[]; onStart: (mode: Mode) => void; onOpen: (item: Assessment) => void; onSignOut: () => void }) {
+function Dashboard({ profile, assessments, onProfile, onStart, onOpen, onSignOut }: { profile: Profile; onProfile: () => void; assessments: Assessment[]; onStart: (mode: Mode) => void; onOpen: (item: Assessment) => void; onSignOut: () => void }) {
   const completed = assessments.filter((item) => item.status === 'complete').length;
-  return <main className="flex min-h-screen flex-col bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5"><Brand/><div className="flex items-center gap-2"><span className="hidden text-sm text-muted-foreground sm:inline">{profile.student_name}</span><Button size="icon" variant="ghost" onClick={onSignOut} title="Sign out"><LogOut/></Button></div></div></header>
+  return <main className="flex min-h-screen flex-col bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5"><Brand/><div className="flex items-center gap-2"><Button variant="outline" size="sm" onClick={onProfile}><UserRound/>My profile</Button><Button size="icon" variant="ghost" onClick={onSignOut} title="Sign out"><LogOut/></Button></div></div></header>
   <section className="border-b bg-card"><div className="mx-auto max-w-6xl px-5 py-10 sm:py-14"><p className="text-xs font-bold uppercase text-primary">Career exploration workspace</p><div className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><h1 className="text-3xl font-extrabold sm:text-4xl">Good to see you, {profile.student_name}.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Choose whose perspective to explore. Every conversation adapts to your answers and saves a high-level career profile.</p></div><div className="flex gap-7 border-l pl-5"><Stat value={String(assessments.length)} label="Assessments"/><Stat value={String(completed)} label="Profiles ready"/></div></div></div></section>
   <section className="mx-auto max-w-6xl flex-1 px-5 py-10"><div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase text-muted-foreground">Start a conversation</p><h2 className="mt-2 text-2xl font-extrabold">Choose a counselling mode</h2></div><Badge variant="secondary"><Sparkles/>Free basic profile</Badge></div>
   <div className="mt-6 grid gap-4 lg:grid-cols-3">{MODES.map(({mode,title,note,icon:Icon,tone})=><button key={mode} onClick={()=>onStart(mode)} className="group flex min-h-56 flex-col border bg-card p-6 text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"><div className={`grid size-11 place-items-center rounded-md ${tone}`}><Icon/></div><h3 className="mt-6 text-xl font-extrabold">{title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{note}</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary">Begin assessment <ArrowRight className="size-4 transition group-hover:translate-x-1"/></span></button>)}</div>
@@ -235,4 +237,26 @@ function AssessmentScreen({ assessment, profile, initialQuestion, initialReflect
 function ReportScreen({profile,report,mode,onDone}:{profile:Profile;report:Report;mode:string;onDone:()=>void}) {
  const groups=[['Interest signals',report.interests],['Strength signals',report.strengths],['Broad streams to explore',report.streams],['Career areas to investigate',report.careers]] as const;
  return <main className="flex min-h-screen flex-col bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onDone}>Back to workspace</Button></div></header><PremiumInvitation mode={mode} onViewResults={() => document.getElementById("free-results")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })} /><section id="free-results" className="mx-auto max-w-5xl flex-1 scroll-mt-6 px-5 py-10"><Badge className="bg-moss text-moss-foreground"><Check/>Basic career profile ready</Badge><h2 className="mt-5 max-w-3xl text-3xl font-extrabold sm:text-4xl">A starting point for {profile.student_name}’s exploration</h2><p className="mt-4 max-w-3xl text-base leading-7 text-ink-soft">{report.snapshot}</p><div className="mt-10 grid gap-px overflow-hidden border bg-border sm:grid-cols-2">{groups.map(([title,items])=><div key={title} className="bg-card p-6"><h2 className="text-sm font-bold uppercase text-muted-foreground">{title}</h2><ul className="mt-4 space-y-3">{items?.map(item=><li key={item} className="flex gap-3 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary"/>{item}</li>)}</ul></div>)}</div>{report.alignment&&<div className="mt-6 border-l-2 border-primary bg-secondary p-5"><h2 className="text-sm font-bold">Preference alignment</h2><p className="mt-2 text-sm leading-6">{report.alignment}</p></div>}<div className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-2xl text-xs leading-5 text-muted-foreground">This profile reflects assessment responses and AI analysed interpretation. It supports family decisions; it does not guarantee suitability, admission or career outcomes.</p><Button asChild size="lg" className="h-auto min-h-11 whitespace-normal"><Link to="/counselling">Start My Personal Career Counselling<ArrowRight/></Link></Button></div></section><SiteFooter /></main>
+}
+
+function ProfileView({ profile, onBack, onUpdated }: { profile: Profile; onBack: () => void; onUpdated: (p: Profile) => void }) {
+  const [category, setCategory] = useState(CLASS_OPTIONS.includes(profile.category) ? profile.category : '');
+  const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
+  async function saveClass() {
+    if (!category) return; setBusy(true); setMsg('');
+    const { data, error } = await supabase.from('student_profiles').update({ category }).eq('id', profile.id).select().single();
+    if (error) setMsg(error.message); else if (data) { onUpdated(data); setMsg('Class updated.'); }
+    setBusy(false);
+  }
+  const rows: Array<[string, string]> = [
+    ['Student name', profile.student_name], ['Parent or guardian name', profile.parent_name], ['Phone number', profile.phone],
+    ['School', profile.school], ['Board', profile.board], ['Subjects', profile.subjects || '—'],
+    ['Principal name', profile.principal_name || '—'], ['School area', profile.area], ['City', profile.city], ['State', profile.state],
+    ['Profile created', new Date(profile.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })],
+  ];
+  return <main className="flex min-h-screen flex-col bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onBack}><ChevronLeft/>Back to workspace</Button></div></header>
+  <section className="mx-auto w-full max-w-3xl flex-1 px-5 py-10"><div className="flex items-start gap-4"><div className="grid size-12 shrink-0 place-items-center rounded-md bg-moss text-moss-foreground"><UserRound/></div><div><p className="text-xs font-bold uppercase text-primary">My profile</p><h1 className="mt-2 text-3xl font-extrabold">{profile.student_name}</h1><p className="mt-2 text-sm text-muted-foreground">The student profile linked to this account.</p></div></div>
+  <div className="mt-8 rounded-md border bg-card p-5"><Label htmlFor="class-select">Current class or year</Label><div className="mt-2 flex flex-col gap-3 sm:flex-row"><select id="class-select" className={selectClass} value={category} onChange={(e)=>setCategory(e.target.value)}><option value="">{CLASS_OPTIONS.includes(profile.category) ? 'Select class…' : `Currently: ${profile.category} — select new class…`}</option>{CLASS_OPTIONS.map((c)=><option key={c} value={c}>{c}</option>)}</select><Button onClick={saveClass} disabled={busy || !category || category === profile.category}>{busy ? 'Saving…' : 'Save class'}</Button></div>{msg && <p role="status" className="mt-2 text-sm text-muted-foreground">{msg}</p>}</div>
+  <dl className="mt-6 divide-y border-y">{rows.map(([k,v])=><div key={k} className="grid gap-1 py-4 sm:grid-cols-[200px_1fr]"><dt className="text-sm font-semibold text-muted-foreground">{k}</dt><dd className="text-sm font-medium">{v}</dd></div>)}</dl>
+  </section><SiteFooter /></main>;
 }
