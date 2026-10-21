@@ -2,6 +2,8 @@
 // Fetches only the official page relevant to the user's question, caches the
 // extracted text in source_records, and records when it was last verified.
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
 import { matchSources, type SourceRecord } from './source-registry';
 
 const CACHE_FRESH_MS = 7 * 24 * 60 * 60 * 1000; // re-fetch pages older than 7 days
@@ -54,11 +56,7 @@ async function fetchPage(url: string): Promise<string | null> {
   }
 }
 
-type SourceClient = {
-  from: (table: 'source_records') => {
-    select: (columns: string) => { order: (column: string, opts: { ascending: boolean }) => Promise<{ data: SourceRecord[] | null }> };
-  };
-};
+type SourceClient = SupabaseClient<Database>;
 
 /**
  * Retrieve the official sources relevant to a user message.
