@@ -58,7 +58,7 @@ export const Route = createFileRoute('/api/counselling')({
         });
         const result = streamText({
           model: provider.responses('openai/gpt-6-astra'),
-          instructions: counsellorInstructions(profile, assessment),
+          instructions: counsellorInstructions(profile, assessment, sources),
           messages: await convertToModelMessages(messages),
           abortSignal: request.signal,
           maxRetries: 0,
