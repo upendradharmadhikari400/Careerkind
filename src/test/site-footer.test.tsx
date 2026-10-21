@@ -5,10 +5,11 @@ import { SiteFooter, SUPPORT_EMAIL } from '@/components/SiteFooter';
 
 afterEach(cleanup);
 
-function renderFooter() {
+async function renderFooter() {
   const rootRoute = createRootRoute({ component: () => <SiteFooter /> });
   const router = createRouter({ routeTree: rootRoute, history: createMemoryHistory({ initialEntries: ['/'] }) });
   render(<RouterProvider router={router} />);
+  await screen.findByText('Contact us');
 }
 
 describe('Site footer', () => {
