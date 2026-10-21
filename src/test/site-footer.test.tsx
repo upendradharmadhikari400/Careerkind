@@ -24,5 +24,6 @@ describe('Site footer', () => {
     expect(SUPPORT_EMAIL).toBe('Help.Contactus23@gmail.com');
     const link = screen.getByRole('link', { name: /Contact us/i });
     expect(link.getAttribute('href')).toBe('mailto:Help.Contactus23@gmail.com');
+    expect(screen.getByText('Help.Contactus23@gmail.com')).toBeTruthy();
   });
 });
