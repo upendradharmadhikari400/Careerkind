@@ -71,6 +71,48 @@ export type Database = {
         }
         Relationships: []
       }
+      source_records: {
+        Row: {
+          authority: string
+          category: string
+          content: string | null
+          created_at: string
+          fetched_at: string | null
+          id: string
+          keywords: string[]
+          status: string
+          title: string
+          url: string
+          verified_at: string | null
+        }
+        Insert: {
+          authority: string
+          category: string
+          content?: string | null
+          created_at?: string
+          fetched_at?: string | null
+          id?: string
+          keywords?: string[]
+          status?: string
+          title: string
+          url: string
+          verified_at?: string | null
+        }
+        Update: {
+          authority?: string
+          category?: string
+          content?: string | null
+          created_at?: string
+          fetched_at?: string | null
+          id?: string
+          keywords?: string[]
+          status?: string
+          title?: string
+          url?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       student_profiles: {
         Row: {
           area: string

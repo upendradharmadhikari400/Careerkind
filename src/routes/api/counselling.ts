@@ -5,6 +5,7 @@ import { convertToModelMessages, streamText, type UIMessage } from 'ai';
 import type { Database } from '@/integrations/supabase/types';
 import { createLovableAiGatewayRunIdFetch, getLovableAiGatewayRunId, withLovableAiGatewayRunIdHeader } from '@/lib/run-id.server';
 import { counsellorInstructions } from '@/lib/counselling-prompt';
+import { retrieveSources } from '@/lib/source-fetch.server';
 
 const json = (status: number, message: string) => Response.json({ error: message }, { status });
 
@@ -39,6 +40,13 @@ export const Route = createFileRoute('/api/counselling')({
         const { error: saveUserError } = await supabase.from('counselling_messages').insert({ user_id: userId, role: 'user', parts: [{ type: 'text', text: lastText }] });
         if (saveUserError) return json(500, 'Could not save your message. Please try again.');
 
+        // Hybrid official-source retrieval: fetch only the official page(s)
+        // relevant to this question, with cached verified results.
+        const sources = await retrieveSources(supabase, lastText).catch((error) => {
+          console.error('Source retrieval failed', error);
+          return [];
+        });
+
         const apiKey = process.env['LOVABLE_API_KEY'];
         if (!apiKey) return json(500, 'AI counselling is not configured.');
         const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
@@ -50,7 +58,7 @@ export const Route = createFileRoute('/api/counselling')({
         });
         const result = streamText({
           model: provider.responses('openai/gpt-6-astra'),
-          instructions: counsellorInstructions(profile, assessment),
+          instructions: counsellorInstructions(profile, assessment, sources),
           messages: await convertToModelMessages(messages),
           abortSignal: request.signal,
           maxRetries: 0,
