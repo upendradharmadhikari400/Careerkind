@@ -1,13 +1,10 @@
-import { Compass } from 'lucide-react';
+import logoAsset from '@/assets/careerkind_logo.png.asset.json';
 
 export function Brand() {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground"><Compass className="size-5" /></div>
-      <div>
-        <div className="font-display text-base font-extrabold leading-none">CareerKind</div>
-        <div className="mt-1 text-[10px] font-bold uppercase text-muted-foreground">AI career intelligence</div>
-      </div>
+      <img src={logoAsset.url} alt="CareerKind logo" className="h-12 w-auto" />
+      <div className="mt-1 hidden text-[10px] font-bold uppercase text-muted-foreground sm:block">AI career intelligence</div>
     </div>
   );
 }
