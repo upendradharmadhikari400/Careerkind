@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Compass, KeyRound, ShieldCheck } from "lucide-react";
+import { KeyRound, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Brand } from "@/components/Brand";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [
@@ -74,15 +75,7 @@ function ResetPasswordScreen() {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-5 py-10">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex items-center gap-2.5">
-          <div className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Compass className="size-5" />
-          </div>
-          <div>
-            <div className="font-display text-base font-extrabold leading-none">CareerKind</div>
-            <div className="mt-1 text-[10px] font-bold uppercase text-muted-foreground">AI career intelligence</div>
-          </div>
-        </div>
+        <div className="mb-8"><Brand /></div>
         <div className="border bg-card p-7">
           <div className="grid size-11 place-items-center rounded-md bg-moss text-moss-foreground">
             <KeyRound className="size-5" />
