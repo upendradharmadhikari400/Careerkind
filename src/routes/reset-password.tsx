@@ -75,7 +75,7 @@ function ResetPasswordScreen() {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-5 py-10">
       <div className="w-full max-w-md">
-        <Brand />
+        <div className="mb-8"><Brand /></div>
         <div className="border bg-card p-7">
           <div className="grid size-11 place-items-center rounded-md bg-moss text-moss-foreground">
             <KeyRound className="size-5" />
