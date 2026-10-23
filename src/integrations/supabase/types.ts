@@ -47,6 +47,27 @@ export type Database = {
         }
         Relationships: []
       }
+      counselling_access: {
+        Row: {
+          created_at: string
+          payment_reference: string
+          user_id: string
+          verified_paid_at: string
+        }
+        Insert: {
+          created_at?: string
+          payment_reference: string
+          user_id: string
+          verified_paid_at: string
+        }
+        Update: {
+          created_at?: string
+          payment_reference?: string
+          user_id?: string
+          verified_paid_at?: string
+        }
+        Relationships: []
+      }
       counselling_messages: {
         Row: {
           created_at: string
