@@ -139,7 +139,7 @@ function AuthScreen() {
   }
 
   return <main className="flex min-h-screen flex-col bg-background">
-    <header className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5"><Brand/><span className="hidden text-sm text-muted-foreground sm:block">A thoughtful next step, not a one-line verdict.</span></header>
+    <header className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-x-8 px-5"><Brand/><span className="hidden text-sm text-muted-foreground sm:block">A thoughtful next step, not a one-line verdict.</span></header>
     <section className="mx-auto grid max-w-6xl flex-1 gap-10 px-5 pb-10 pt-4 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
       <div className="relative min-h-[440px] overflow-hidden rounded-lg bg-primary lg:min-h-[620px]">
         <img src={studentImage.url} alt="Students discussing their future together" className="absolute inset-0 h-full w-full object-cover opacity-65"/>
