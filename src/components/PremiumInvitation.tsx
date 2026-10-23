@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ArrowRight, BookOpen, Compass, GraduationCap, Globe2, Wallet, Route, ShieldCheck, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { COUNSELLOR_NAME, counsellingPlan, counsellingPrice, counsellingDiscountPrice } from '@/lib/counselling-config';
+import { COUNSELLOR_NAME, COUNSELLING_ACCESS_POLICY, counsellingPlan, counsellingPrice, counsellingDiscountPrice } from '@/lib/counselling-config';
 
 const benefits = [
   { icon: GraduationCap, title: 'Courses that fit you', detail: 'Personalized career paths, eligibility and alternatives.' },
@@ -30,6 +30,7 @@ export function PremiumInvitation({ mode, onViewResults }: { mode: string; onVie
           <Button asChild size="lg" className="h-auto min-h-11 whitespace-normal px-4 py-3 text-center"><Link to="/counselling">Start My Personal Career Counselling<ArrowRight /></Link></Button>
           <Button variant="outline" className="h-auto min-h-10 whitespace-normal px-4 py-2" onClick={onViewResults}><BookOpen />View My Free Assessment Results</Button>
           <p className="text-xs leading-5 text-muted-foreground">No payment is taken during early access.</p>
+          <p className="text-xs leading-5 text-muted-foreground">{COUNSELLING_ACCESS_POLICY}</p>
         </div>
       </div>
       <div className="mt-7 flex items-start gap-2 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 size-4 shrink-0" /><p>AI guidance supports your decisions; it does not guarantee admissions, scholarships, placements or salaries. Fees, dates and cut-offs may change — always confirm on official websites.</p></div>

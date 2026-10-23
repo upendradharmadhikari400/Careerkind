@@ -6,6 +6,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { createLovableAiGatewayRunIdFetch, getLovableAiGatewayRunId, withLovableAiGatewayRunIdHeader } from '@/lib/run-id.server';
 import { counsellorInstructions } from '@/lib/counselling-prompt';
 import { retrieveSources } from '@/lib/source-fetch.server';
+import { counsellingAccess } from '@/lib/counselling-config';
 
 const json = (status: number, message: string) => Response.json({ error: message }, { status });
 
@@ -22,6 +23,14 @@ export const Route = createFileRoute('/api/counselling')({
         const { data: userData, error: userError } = await supabase.auth.getUser(token);
         if (userError || !userData.user) return json(401, 'Please sign in again.');
         const userId = userData.user.id;
+
+        // Only trusted payment verification can write this account's entitlement.
+        // Check before saving a new question or invoking retrieval/AI; history reads stay independent.
+        const { data: access, error: accessError } = await supabase.from('counselling_access').select('verified_paid_at').eq('user_id', userId).maybeSingle();
+        if (accessError) return json(503, 'Could not check session validity. Please try again.');
+        if (!counsellingAccess(access?.verified_paid_at ?? null).canAsk) {
+          return json(403, 'Your 28-day paid session has ended. Your old questions, answers and saved reports remain available for your lifetime. A new paid session is required to ask new questions; checkout is not available yet.');
+        }
 
         const body = (await request.json().catch(() => null)) as { messages?: UIMessage[] } | null;
         const messages = Array.isArray(body?.messages) ? body.messages.slice(-40) : [];

@@ -9,7 +9,7 @@ import { Conversation, ConversationContent, ConversationEmptyState, Conversation
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea, type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import { Shimmer } from '@/components/ai-elements/shimmer';
-import { COUNSELLOR_NAME } from '@/lib/counselling-config';
+import { COUNSELLOR_NAME, COUNSELLING_ACCESS_POLICY, counsellingAccess } from '@/lib/counselling-config';
 
 export const Route = createFileRoute('/counselling')({
   head: () => ({ meta: [
@@ -25,7 +25,7 @@ export const Route = createFileRoute('/counselling')({
 
 const QUICK = ['Recommend best-fit courses for me', 'Suggest suitable colleges in India', 'Explore colleges abroad', 'Which entrance exams should I prepare for?', 'Scholarships I could look into', 'Make me a 90-day preparation plan', 'Compare two courses for me', 'Show alternative career paths'];
 
-type LoadState = { kind: 'loading' } | { kind: 'signedOut' } | { kind: 'needsAssessment' } | { kind: 'ready'; firstName: string; messages: UIMessage[] };
+type LoadState = { kind: 'loading' } | { kind: 'signedOut' } | { kind: 'needsAssessment' } | { kind: 'error' } | { kind: 'ready'; firstName: string; messages: UIMessage[]; verifiedPaidAt: string | null };
 
 function CounsellingPage() {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
@@ -35,14 +35,23 @@ function CounsellingPage() {
       const { data } = await supabase.auth.getSession();
       const user = data.session?.user;
       if (!user) return !cancelled && setState({ kind: 'signedOut' });
-      const [{ data: profile }, { count }, { data: rows }] = await Promise.all([
+      const [{ data: profile }, { count }, { data: access, error: accessError }] = await Promise.all([
         supabase.from('student_profiles').select('student_name').eq('user_id', user.id).maybeSingle(),
         supabase.from('assessments').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'complete'),
-        supabase.from('counselling_messages').select('id,role,parts').eq('user_id', user.id).order('created_at').limit(200),
+        supabase.from('counselling_access').select('verified_paid_at').eq('user_id', user.id).maybeSingle(),
       ]);
+      const history: UIMessage[] = [];
+      // Page through all saved replies: paid expiry must not hide older history.
+      for (let offset = 0; !cancelled; offset += 500) {
+        const { data: rows, error } = await supabase.from('counselling_messages').select('id,role,parts').eq('user_id', user.id).order('created_at').order('id').range(offset, offset + 499);
+        if (error) { if (!cancelled) setState({ kind: 'error' }); return; }
+        history.push(...(rows ?? []).map((r) => ({ id: r.id, role: r.role as 'user' | 'assistant', parts: r.parts as UIMessage['parts'] })));
+        if ((rows?.length ?? 0) < 500) break;
+      }
       if (cancelled) return;
+      if (accessError) return setState({ kind: 'error' });
       if (!profile || !count) return setState({ kind: 'needsAssessment' });
-      setState({ kind: 'ready', firstName: profile.student_name.split(' ')[0] ?? profile.student_name, messages: (rows ?? []).map((r) => ({ id: r.id, role: r.role as 'user' | 'assistant', parts: r.parts as UIMessage['parts'] })) });
+      setState({ kind: 'ready', firstName: profile.student_name.split(' ')[0] ?? profile.student_name, messages: history, verifiedPaidAt: access?.verified_paid_at ?? null });
     })();
     return () => { cancelled = true; };
   }, []);
@@ -53,13 +62,14 @@ function CounsellingPage() {
         <Button asChild variant="ghost" size="icon" aria-label="Back to workspace"><Link to="/"><ArrowLeft /></Link></Button>
         <div className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"><Compass className="size-5" /></div>
         <div className="min-w-0 flex-1"><h1 className="truncate text-base font-extrabold">{COUNSELLOR_NAME}</h1><p className="truncate text-xs font-semibold text-primary">AI-powered Career Counsellor{state.kind === 'ready' ? ` · with ${state.firstName}` : ''}</p></div>
-        <span className="hidden rounded-full bg-secondary px-3 py-1 text-xs font-semibold sm:inline">Free early access</span>
+        <span className="hidden rounded-full bg-secondary px-3 py-1 text-xs font-semibold sm:inline">{state.kind === 'ready' && state.verifiedPaidAt ? '28-day paid session' : 'Free early access'}</span>
       </div>
     </header>
     {state.kind === 'loading' && <div className="grid flex-1 place-items-center"><Shimmer>Opening your counselling room…</Shimmer></div>}
     {state.kind === 'signedOut' && <Notice title="Please sign in" body="Sign in to continue your private counselling conversation." />}
     {state.kind === 'needsAssessment' && <Notice title="Complete a free assessment first" body={`${COUNSELLOR_NAME} builds on your assessment results, so please finish one free assessment before starting.`} />}
-    {state.kind === 'ready' && <ChatRoom initial={state.messages} firstName={state.firstName} />}
+    {state.kind === 'error' && <Notice title="Could not open your saved session" body="Please reload to try again. Your saved questions and answers have not been changed." />}
+    {state.kind === 'ready' && <ChatRoom initial={state.messages} firstName={state.firstName} verifiedPaidAt={state.verifiedPaidAt} />}
   </main>;
 }
 
@@ -67,7 +77,10 @@ function Notice({ title, body }: { title: string; body: string }) {
   return <div className="grid flex-1 place-items-center px-5"><div className="max-w-md text-center"><h2 className="text-xl font-extrabold">{title}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p><Button asChild className="mt-5"><Link to="/">Go to my workspace</Link></Button></div></div>;
 }
 
-function ChatRoom({ initial, firstName }: { initial: UIMessage[]; firstName: string }) {
+function ChatRoom({ initial, firstName, verifiedPaidAt }: { initial: UIMessage[]; firstName: string; verifiedPaidAt: string | null }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
+  const access = counsellingAccess(verifiedPaidAt, now);
   const [error, setError] = useState('');
   const [text, setText] = useState('');
   const { messages, sendMessage, status, stop } = useChat({
@@ -87,7 +100,7 @@ function ChatRoom({ initial, firstName }: { initial: UIMessage[]; firstName: str
     },
   });
   const busy = status === 'submitted' || status === 'streaming';
-  const send = (value: string) => { const v = value.trim(); if (!v || busy) return; setError(''); setText(''); void sendMessage({ text: v }); };
+  const send = (value: string) => { const v = value.trim(); if (!v || busy || !counsellingAccess(verifiedPaidAt).canAsk) return; setError(''); setText(''); void sendMessage({ text: v }); };
 
   return <>
     <Conversation className="flex-1">
@@ -105,11 +118,13 @@ function ChatRoom({ initial, firstName }: { initial: UIMessage[]; firstName: str
     </Conversation>
     <div className="border-t bg-card">
       <div className="mx-auto w-full max-w-4xl px-4 py-3">
-        <div className="mb-3 flex gap-2 overflow-x-auto pb-1">{QUICK.map((q) => <Button key={q} variant="outline" size="sm" className="shrink-0" disabled={busy} onClick={() => send(q)}>{q}</Button>)}</div>
+        <p className="mb-3 text-xs leading-5 text-muted-foreground">{COUNSELLING_ACCESS_POLICY}</p>
+        {access.expiresAt && <p className="mb-3 text-sm font-semibold">{access.canAsk ? `New questions available until ${new Date(access.expiresAt).toLocaleString('en-IN')}` : 'Your 28-day session has ended. Saved history remains available; a new paid session is needed for new questions. Checkout is not available yet.'}</p>}
+        {access.canAsk && <><div className="mb-3 flex gap-2 overflow-x-auto pb-1">{QUICK.map((q) => <Button key={q} variant="outline" size="sm" className="shrink-0" disabled={busy} onClick={() => send(q)}>{q}</Button>)}</div>
         <PromptInput onSubmit={(msg: PromptInputMessage) => send(msg.text ?? '')}>
           <PromptInputTextarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask about courses, colleges, exams, fees…" maxLength={2000} />
           <PromptInputFooter className="justify-end"><PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} /></PromptInputFooter>
-        </PromptInput>
+        </PromptInput></>}
         <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-muted-foreground"><ShieldCheck className="size-3.5 shrink-0" />AI guidance, not guaranteed outcomes. Fees, dates and cut-offs may be outdated — always verify on official websites.</p>
       </div>
     </div>

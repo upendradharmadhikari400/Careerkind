@@ -1,4 +1,5 @@
 # Career counselling app
+- [x] Add 28-day verified-paid question access while preserving lifetime history and current free early access.
 - [x] Add the post-assessment premium invitation, existing mode prices, AI disclosure and explicit unavailable-checkout state.
 - [x] Open one ongoing private AI counselling conversation (free early access until Razorpay is set up).
 - [x] Add the site footer with the privacy policy page and the Contact us support email.
