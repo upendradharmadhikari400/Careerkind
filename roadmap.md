@@ -1,4 +1,8 @@
 # Career counselling app
+- [ ] Add senior secondary class and writable other subjects to new and existing profiles.
+- [ ] Add a private 99% coupon limited to ten payments, with checkout entry and server enforcement.
+- [ ] Refresh professional school/family background and keep branding at the far left.
+- [ ] Add School partners page; actual partner listings await supplied school details.
 - [x] Add 28-day verified-paid question access while preserving lifetime history and current free early access.
 - [x] Add the post-assessment premium invitation, existing mode prices, AI disclosure and explicit unavailable-checkout state.
 - [x] Open one ongoing private AI counselling conversation (free early access until Razorpay is set up).

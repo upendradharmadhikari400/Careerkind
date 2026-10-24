@@ -66,7 +66,16 @@
   --sky: oklch(.92 .027 235);
   --sky-foreground: oklch(.35 .07 235);
   --ink-soft: oklch(.42 .026 179);
+  --canvas-pattern: linear-gradient(120deg, color-mix(in oklab, var(--sky) 35%, var(--background)), var(--background) 45%, color-mix(in oklab, var(--secondary) 40%, var(--background)));
+  --photo-shade: linear-gradient(90deg, color-mix(in oklab, var(--primary) 85%, transparent), color-mix(in oklab, var(--primary) 30%, transparent));
 }
+.site-canvas { background: var(--canvas-pattern); }
+.photo-shade { background: var(--photo-shade); }
+.community-banner { min-height: 300px; }
+.brand-header { width: 100%; max-width: none; margin-inline: 0; }
+main > header, main > header > div:has(> div > img[alt="Career Kind logo"]) { width: 100%; max-width: none; margin-inline: 0; }
+main > header { flex-shrink: 0; }
+@media (max-width: 640px) { main > header:has(img[alt="Career Kind logo"]), main > header > div:has(img[alt="Career Kind logo"]) { height: auto; min-height: 80px; flex-wrap: wrap; gap: 12px; padding-block: 12px; } }
 @layer base {
   * { border-color: var(--color-border); }
   body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); }

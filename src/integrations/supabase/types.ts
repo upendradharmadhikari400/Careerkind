@@ -68,6 +68,71 @@ export type Database = {
         }
         Relationships: []
       }
+      counselling_coupon_orders: {
+        Row: {
+          amount: number
+          coupon_id: string
+          created_at: string
+          id: string
+          mode: string
+          order_id: string | null
+          payment_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          coupon_id: string
+          created_at?: string
+          id?: string
+          mode: string
+          order_id?: string | null
+          payment_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          coupon_id?: string
+          created_at?: string
+          id?: string
+          mode?: string
+          order_id?: string | null
+          payment_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counselling_coupon_orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "counselling_coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      counselling_coupons: {
+        Row: {
+          active: boolean
+          code_hash: string
+          discount_percent: number
+          id: string
+          max_uses: number
+        }
+        Insert: {
+          active?: boolean
+          code_hash: string
+          discount_percent: number
+          id?: string
+          max_uses: number
+        }
+        Update: {
+          active?: boolean
+          code_hash?: string
+          discount_percent?: number
+          id?: string
+          max_uses?: number
+        }
+        Relationships: []
+      }
       counselling_messages: {
         Row: {
           created_at: string
@@ -193,7 +258,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reserve_counselling_coupon: {
+        Args: {
+          p_base_amount: number
+          p_hash: string
+          p_mode: string
+          p_user: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
