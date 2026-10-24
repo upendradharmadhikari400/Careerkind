@@ -29,6 +29,13 @@
       "when": 1792775543982,
       "tag": "0003_paid_counselling_access",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792827746364,
+      "tag": "0004_private_counselling_coupons",
+      "breakpoints": true
     }
   ]
 }
