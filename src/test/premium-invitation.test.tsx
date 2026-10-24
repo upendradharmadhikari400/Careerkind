@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRootRoute, createRouter, RouterProvider } from '@tanstack/react-router';
+vi.mock('@tanstack/react-start', () => ({ useServerFn: (f: unknown) => f }));
+vi.mock('@/lib/razorpay.functions', () => ({ createCounsellingOrder: vi.fn(), verifyCounsellingPayment: vi.fn() }));
 import { PremiumInvitation } from '@/components/PremiumInvitation';
 import { counsellingPlan } from '@/lib/counselling-config';
 
@@ -21,10 +23,9 @@ describe('Premium counselling invitation', () => {
     }
   });
 
-  it('opens counselling for free during early access', async () => {
+  it('offers Razorpay payment at the discounted price', async () => {
     await renderInvitation('joint');
-    const link = screen.getByRole('link', { name: 'Start My Personal Career Counselling' });
-    expect(link.getAttribute('href')).toBe('/counselling');
+    expect(screen.getByRole('button', { name: /Pay ₹1,499/ })).toBeTruthy();
   });
 
   it('keeps the free results accessible', async () => {

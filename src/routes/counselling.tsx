@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Conversation, ConversationContent, ConversationEmptyState, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea, type PromptInputMessage } from '@/components/ai-elements/prompt-input';
+import { RazorpayButton } from '@/components/RazorpayButton';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { COUNSELLOR_NAME, COUNSELLING_ACCESS_POLICY, counsellingAccess } from '@/lib/counselling-config';
 
@@ -62,7 +63,7 @@ function CounsellingPage() {
         <Button asChild variant="ghost" size="icon" aria-label="Back to workspace"><Link to="/"><ArrowLeft /></Link></Button>
         <div className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"><Compass className="size-5" /></div>
         <div className="min-w-0 flex-1"><h1 className="truncate text-base font-extrabold">{COUNSELLOR_NAME}</h1><p className="truncate text-xs font-semibold text-primary">AI-powered Career Counsellor{state.kind === 'ready' ? ` · with ${state.firstName}` : ''}</p></div>
-        <span className="hidden rounded-full bg-secondary px-3 py-1 text-xs font-semibold sm:inline">{state.kind === 'ready' && state.verifiedPaidAt ? '28-day paid session' : 'Free early access'}</span>
+        <span className="hidden rounded-full bg-secondary px-3 py-1 text-xs font-semibold sm:inline">{state.kind === 'ready' && state.verifiedPaidAt ? '28-day paid session' : 'Not yet purchased'}</span>
       </div>
     </header>
     {state.kind === 'loading' && <div className="grid flex-1 place-items-center"><Shimmer>Opening your counselling room…</Shimmer></div>}
@@ -119,7 +120,8 @@ function ChatRoom({ initial, firstName, verifiedPaidAt }: { initial: UIMessage[]
     <div className="border-t bg-card">
       <div className="mx-auto w-full max-w-4xl px-4 py-3">
         <p className="mb-3 text-xs leading-5 text-muted-foreground">{COUNSELLING_ACCESS_POLICY}</p>
-        {access.expiresAt && <p className="mb-3 text-sm font-semibold">{access.canAsk ? `New questions available until ${new Date(access.expiresAt).toLocaleString('en-IN')}` : 'Your 28-day session has ended. Saved history remains available; a new paid session is needed for new questions. Checkout is not available yet.'}</p>}
+        {access.expiresAt && <p className="mb-3 text-sm font-semibold">{access.canAsk ? `New questions available until ${new Date(access.expiresAt).toLocaleString('en-IN')}` : 'Your 28-day session has ended. Saved history remains available; a new paid session is needed for new questions.'}</p>}
+        {!access.canAsk && <div className="mb-3"><p className="mb-2 text-sm font-semibold">{access.kind === 'unpaid' ? 'Purchase a 28-day personal session to ask new questions.' : ''}</p><RazorpayButton mode="student" label={access.kind === 'unpaid' ? 'Pay ₹1,499 & start counselling' : 'Renew for ₹1,499'} onPaid={() => window.location.reload()} /></div>}
         {access.canAsk && <><div className="mb-3 flex gap-2 overflow-x-auto pb-1">{QUICK.map((q) => <Button key={q} variant="outline" size="sm" className="shrink-0" disabled={busy} onClick={() => send(q)}>{q}</Button>)}</div>
         <PromptInput onSubmit={(msg: PromptInputMessage) => send(msg.text ?? '')}>
           <PromptInputTextarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask about courses, colleges, exams, fees…" maxLength={2000} />

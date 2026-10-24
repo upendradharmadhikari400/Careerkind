@@ -29,7 +29,7 @@ export const Route = createFileRoute('/api/counselling')({
         const { data: access, error: accessError } = await supabase.from('counselling_access').select('verified_paid_at').eq('user_id', userId).maybeSingle();
         if (accessError) return json(503, 'Could not check session validity. Please try again.');
         if (!counsellingAccess(access?.verified_paid_at ?? null).canAsk) {
-          return json(403, 'Your 28-day paid session has ended. Your old questions, answers and saved reports remain available for your lifetime. A new paid session is required to ask new questions; checkout is not available yet.');
+          return json(403, 'A paid session is needed for new questions. Your old questions, answers and saved reports remain available for your lifetime. Please purchase a 28-day personal session to ask new questions.');
         }
 
         const body = (await request.json().catch(() => null)) as { messages?: UIMessage[] } | null;
