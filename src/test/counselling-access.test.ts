@@ -10,8 +10,8 @@ describe('paid counselling validity', () => {
     expect(counsellingAccess(paidAt, expiry).canAsk).toBe(false);
     expect(counsellingAccess(paidAt, expiry + 1000).canAsk).toBe(false);
   });
-  it('does not apply paid expiry to free early access', () => {
-    expect(counsellingAccess(null, expiry)).toMatchObject({ canAsk: true, kind: 'earlyAccess' });
+  it('blocks new questions until a verified payment exists', () => {
+    expect(counsellingAccess(null, expiry)).toMatchObject({ canAsk: false, kind: 'unpaid' });
   });
   it('rejects invalid or future payment timestamps', () => {
     expect(counsellingAccess('invalid', expiry).canAsk).toBe(false);
