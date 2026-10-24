@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import studentImage from '@/assets/career-students.jpg.asset.json';
+import communityImage from '@/assets/school-community.jpg';
+import { SubjectPicker } from '@/components/SubjectPicker';
+import { mergeSubjects } from '@/lib/profile-subjects';
 import type { Database } from '@/integrations/supabase/types';
 import { SUBJECTS, STATES, STATE_CITIES, CLASS_OPTIONS } from '@/lib/india-data';
 import { PremiumInvitation } from '@/components/PremiumInvitation';
@@ -138,18 +140,14 @@ function AuthScreen() {
     setBusy(false);
   }
 
-  return <main className="flex min-h-screen flex-col bg-background">
-    <header className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-x-8 px-5"><Brand/><span className="hidden text-sm text-muted-foreground sm:block">A thoughtful next step, not a one-line verdict.</span></header>
-    <section className="mx-auto grid max-w-6xl flex-1 gap-10 px-5 pb-10 pt-4 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
-      <div className="relative min-h-[440px] overflow-hidden rounded-lg bg-primary lg:min-h-[620px]">
-        <img src={studentImage.url} alt="Students discussing their future together" className="absolute inset-0 h-full w-full object-cover opacity-65"/>
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,var(--primary),transparent_70%)]"/>
-        <div className="absolute inset-x-0 bottom-0 p-7 text-primary-foreground sm:p-10">
-          <Badge className="mb-4 border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground">For students and parents</Badge>
-          <h1 className="max-w-lg text-4xl font-extrabold leading-tight sm:text-5xl">From self-discovery to a career roadmap.</h1>
-          <p className="mt-4 max-w-md text-sm leading-6 text-primary-foreground/80">Explore interests, strengths, academics and family context through a conversation that adapts to every answer.</p>
-        </div>
-      </div>
+  return <main className="site-canvas flex min-h-screen flex-col">
+    <header className="brand-header flex min-h-20 flex-wrap items-center justify-between gap-4 border-b bg-card px-5 py-3"><Brand/><Button asChild variant="ghost" size="sm"><Link to="/school-partners">School partners<ArrowRight /></Link></Button></header>
+    <section className="community-banner relative isolate overflow-hidden">
+      <img src={communityImage} width={1920} height={1088} alt="Students, parents and a teacher planning education together" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+      <div className="photo-shade absolute inset-0 -z-10" />
+      <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14"><Badge className="mb-4 border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground">Students · Parents · Schools</Badge><h1 className="text-4xl font-extrabold leading-tight text-primary-foreground sm:text-5xl">Career Kind</h1><p className="mt-4 max-w-lg text-base leading-7 text-primary-foreground">From self-discovery to a career roadmap.<br />Thoughtful futures, shaped together.</p></div>
+    </section>
+    <section className="mx-auto w-full max-w-6xl flex-1 px-5 pb-10">
       <div className="mx-auto w-full max-w-md py-8">
         <p className="text-xs font-bold uppercase text-primary">Private by design</p>
         <h2 className="mt-3 text-3xl font-extrabold">{view === 'forgot' ? 'Reset your password' : view === 'signin' ? 'Welcome back' : 'Create your family account'}</h2>
@@ -183,28 +181,22 @@ function ProfileScreen({ user, onSaved }: { user: User; onSaved: (profile: Profi
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const [form, setForm] = useState({ student_name: '', parent_name: '', phone: '', category: '', school: '', area: '', city: '', state: '', board: '', principal_name: '', consent_confirmed: false });
   const [subjects, setSubjects] = useState<string[]>([]);
+  const [otherSubjects, setOtherSubjects] = useState('');
   const update = (key: keyof typeof form, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }));
-  const toggleSubject = (s: string) => setSubjects((cur) => cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (subjects.length === 0) { setError('Please select at least one subject.'); return; }
+    if (!mergeSubjects(subjects, otherSubjects)) { setError('Please select at least one subject.'); return; }
     setBusy(true); setError('');
-    const { data, error: saveError } = await supabase.from('student_profiles').insert({ ...form, principal_name: form.principal_name.trim(), subjects: subjects.join(', '), user_id: user.id }).select().single();
+    const { data, error: saveError } = await supabase.from('student_profiles').insert({ ...form, principal_name: form.principal_name.trim(), subjects: mergeSubjects(subjects, otherSubjects), user_id: user.id }).select().single();
     if (saveError) setError(saveError.message); else if (data) onSaved(data);
     setBusy(false);
   }
-  return <main className="flex min-h-screen flex-col bg-background"><header className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="ghost" onClick={() => void supabase.auth.signOut()}><LogOut/>Sign out</Button></header><section className="mx-auto max-w-3xl flex-1 px-5 pb-16 pt-8"><div className="flex items-start gap-4"><div className="grid size-12 shrink-0 place-items-center rounded-md bg-moss text-moss-foreground"><UserRound/></div><div><p className="text-xs font-bold uppercase text-primary">Step 1 of 1</p><h1 className="mt-2 text-3xl font-extrabold">Tell us about the student</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">This creates the single student profile linked to this account. The AI uses it only to make questions more relevant.</p></div></div>
+  return <main className="site-canvas flex min-h-screen flex-col"><header className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="ghost" onClick={() => void supabase.auth.signOut()}><LogOut/>Sign out</Button></header><section className="mx-auto max-w-3xl flex-1 px-5 pb-16 pt-8"><div className="flex items-start gap-4"><div className="grid size-12 shrink-0 place-items-center rounded-md bg-moss text-moss-foreground"><UserRound/></div><div><p className="text-xs font-bold uppercase text-primary">Step 1 of 1</p><h1 className="mt-2 text-3xl font-extrabold">Tell us about the student</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">This creates the single student profile linked to this account. The AI uses it only to make questions more relevant.</p></div></div>
   <form onSubmit={submit} className="mt-10 grid gap-5 border-t pt-8 sm:grid-cols-2">
     <Field label="Student name"><Input required value={form.student_name} onChange={(e)=>update('student_name',e.target.value)}/></Field><Field label="Parent or guardian name"><Input required value={form.parent_name} onChange={(e)=>update('parent_name',e.target.value)}/></Field>
     <Field label="Phone number"><Input required type="tel" value={form.phone} onChange={(e)=>update('phone',e.target.value)} placeholder="For future account recovery"/></Field><Field label="Current class or year"><select required className={selectClass} value={form.category} onChange={(e)=>update('category',e.target.value)}><option value="">Select class…</option>{CLASS_OPTIONS.map((c)=><option key={c} value={c}>{c}</option>)}</select></Field>
     <Field label="School"><Input required value={form.school} onChange={(e)=>update('school',e.target.value)}/></Field><Field label="Board"><Input required value={form.board} onChange={(e)=>update('board',e.target.value)} placeholder="e.g. CBSE, ICSE, State Board"/></Field>
-    <div className="space-y-2 sm:col-span-2"><Label>Subjects <span className="font-normal text-muted-foreground">(select all that apply)</span></Label>
-      <select className={selectClass} value="" onChange={(e)=>{ if (e.target.value) toggleSubject(e.target.value); }}>
-        <option value="">Add a subject…</option>
-        {SUBJECTS.filter((s)=>!subjects.includes(s)).map((s)=><option key={s} value={s}>{s}</option>)}
-      </select>
-      {subjects.length>0 && <div className="flex flex-wrap gap-2 pt-1">{subjects.map((s)=><button type="button" key={s} onClick={()=>toggleSubject(s)} className="inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground hover:bg-secondary/70" title="Remove">{s}<X className="size-3"/></button>)}</div>}
-    </div>
+    <div className="sm:col-span-2"><SubjectPicker selected={subjects} other={otherSubjects} onSelected={setSubjects} onOther={setOtherSubjects} /></div>
     <Field label="Principal name (optional)"><Input value={form.principal_name} onChange={(e)=>update('principal_name',e.target.value)}/></Field>
     <Field label="School area"><Input required value={form.area} onChange={(e)=>update('area',e.target.value)} placeholder="Locality where the school is"/></Field>
     <Field label="State"><select required className={selectClass} value={form.state} onChange={(e)=>setForm((c)=>({...c,state:e.target.value,city:''}))}><option value="">Select state…</option>{STATES.map((s)=><option key={s} value={s}>{s}</option>)}</select></Field>
@@ -216,7 +208,7 @@ function ProfileScreen({ user, onSaved }: { user: User; onSaved: (profile: Profi
 
 function Dashboard({ profile, assessments, onProfile, onStart, onOpen, onSignOut }: { profile: Profile; onProfile: () => void; assessments: Assessment[]; onStart: (mode: Mode) => void; onOpen: (item: Assessment) => void; onSignOut: () => void }) {
   const completed = assessments.filter((item) => item.status === 'complete').length;
-  return <main className="flex min-h-screen flex-col bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5"><Brand/><div className="flex items-center gap-2"><Button variant="outline" size="sm" onClick={onProfile}><UserRound/>My profile</Button><Button size="icon" variant="ghost" onClick={onSignOut} title="Sign out"><LogOut/></Button></div></div></header>
+  return <main className="site-canvas flex min-h-screen flex-col"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5"><Brand/><div className="flex items-center gap-2"><Button variant="outline" size="sm" onClick={onProfile}><UserRound/>My profile</Button><Button size="icon" variant="ghost" onClick={onSignOut} title="Sign out"><LogOut/></Button></div></div></header>
   <section className="border-b bg-card"><div className="mx-auto max-w-6xl px-5 py-10 sm:py-14"><p className="text-xs font-bold uppercase text-primary">Career exploration workspace</p><div className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><h1 className="text-3xl font-extrabold sm:text-4xl">Good to see you, {profile.student_name}.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Choose whose perspective to explore. Every conversation adapts to your answers and saves a high-level career profile.</p></div><div className="flex gap-7 border-l pl-5"><Stat value={String(assessments.length)} label="Assessments"/><Stat value={String(completed)} label="Profiles ready"/></div></div></div></section>
   <section className="mx-auto max-w-6xl flex-1 px-5 py-10"><div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase text-muted-foreground">Start a conversation</p><h2 className="mt-2 text-2xl font-extrabold">Choose a counselling mode</h2></div><Badge variant="secondary"><Sparkles/>Free basic profile</Badge></div>
   <div className="mt-6 grid gap-4 lg:grid-cols-3">{MODES.map(({mode,title,note,icon:Icon,tone})=><button key={mode} onClick={()=>onStart(mode)} className="group flex min-h-56 flex-col border bg-card p-6 text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"><div className={`grid size-11 place-items-center rounded-md ${tone}`}><Icon/></div><h3 className="mt-6 text-xl font-extrabold">{title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{note}</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary">Begin assessment <ArrowRight className="size-4 transition group-hover:translate-x-1"/></span></button>)}</div>
@@ -236,16 +228,19 @@ function AssessmentScreen({ assessment, profile, initialQuestion, initialReflect
 
 function ReportScreen({profile,report,mode,onDone}:{profile:Profile;report:Report;mode:string;onDone:()=>void}) {
  const groups=[['Interest signals',report.interests],['Strength signals',report.strengths],['Broad streams to explore',report.streams],['Career areas to investigate',report.careers]] as const;
- return <main className="flex min-h-screen flex-col bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onDone}>Back to workspace</Button></div></header><PremiumInvitation mode={mode} onViewResults={() => document.getElementById("free-results")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })} /><section id="free-results" className="mx-auto max-w-5xl flex-1 scroll-mt-6 px-5 py-10"><Badge className="bg-moss text-moss-foreground"><Check/>Basic career profile ready</Badge><h2 className="mt-5 max-w-3xl text-3xl font-extrabold sm:text-4xl">A starting point for {profile.student_name}’s exploration</h2><p className="mt-4 max-w-3xl text-base leading-7 text-ink-soft">{report.snapshot}</p><div className="mt-10 grid gap-px overflow-hidden border bg-border sm:grid-cols-2">{groups.map(([title,items])=><div key={title} className="bg-card p-6"><h2 className="text-sm font-bold uppercase text-muted-foreground">{title}</h2><ul className="mt-4 space-y-3">{items?.map(item=><li key={item} className="flex gap-3 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary"/>{item}</li>)}</ul></div>)}</div>{report.alignment&&<div className="mt-6 border-l-2 border-primary bg-secondary p-5"><h2 className="text-sm font-bold">Preference alignment</h2><p className="mt-2 text-sm leading-6">{report.alignment}</p></div>}<div className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-2xl text-xs leading-5 text-muted-foreground">This profile reflects assessment responses and AI analysed interpretation. It supports family decisions; it does not guarantee suitability, admission or career outcomes.</p><Button asChild size="lg" className="h-auto min-h-11 whitespace-normal"><Link to="/counselling">Start My Personal Career Counselling<ArrowRight/></Link></Button></div></section><SiteFooter /></main>
+ return <main className="site-canvas flex min-h-screen flex-col"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onDone}>Back to workspace</Button></div></header><PremiumInvitation mode={mode} onViewResults={() => document.getElementById("free-results")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })} /><section id="free-results" className="mx-auto max-w-5xl flex-1 scroll-mt-6 px-5 py-10"><Badge className="bg-moss text-moss-foreground"><Check/>Basic career profile ready</Badge><h2 className="mt-5 max-w-3xl text-3xl font-extrabold sm:text-4xl">A starting point for {profile.student_name}’s exploration</h2><p className="mt-4 max-w-3xl text-base leading-7 text-ink-soft">{report.snapshot}</p><div className="mt-10 grid gap-px overflow-hidden border bg-border sm:grid-cols-2">{groups.map(([title,items])=><div key={title} className="bg-card p-6"><h2 className="text-sm font-bold uppercase text-muted-foreground">{title}</h2><ul className="mt-4 space-y-3">{items?.map(item=><li key={item} className="flex gap-3 text-sm leading-6"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary"/>{item}</li>)}</ul></div>)}</div>{report.alignment&&<div className="mt-6 border-l-2 border-primary bg-secondary p-5"><h2 className="text-sm font-bold">Preference alignment</h2><p className="mt-2 text-sm leading-6">{report.alignment}</p></div>}<div className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-2xl text-xs leading-5 text-muted-foreground">This profile reflects assessment responses and AI analysed interpretation. It supports family decisions; it does not guarantee suitability, admission or career outcomes.</p><Button asChild size="lg" className="h-auto min-h-11 whitespace-normal"><Link to="/counselling">Start My Personal Career Counselling<ArrowRight/></Link></Button></div></section><SiteFooter /></main>
 }
 
 function ProfileView({ profile, onBack, onUpdated }: { profile: Profile; onBack: () => void; onUpdated: (p: Profile) => void }) {
   const [category, setCategory] = useState(CLASS_OPTIONS.includes(profile.category) ? profile.category : '');
+  const initialSubjects = (profile.subjects || '').split(',').map(s => s.trim()).filter(Boolean);
+  const [subjects, setSubjects] = useState(initialSubjects.filter(s => SUBJECTS.includes(s)));
+  const [otherSubjects, setOtherSubjects] = useState(initialSubjects.filter(s => !SUBJECTS.includes(s)).join(', '));
   const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function saveClass() {
-    if (!category) return; setBusy(true); setMsg('');
-    const { data, error } = await supabase.from('student_profiles').update({ category }).eq('id', profile.id).select().single();
-    if (error) setMsg(error.message); else if (data) { onUpdated(data); setMsg('Class updated.'); }
+    if (!category || !mergeSubjects(subjects, otherSubjects)) { setMsg('Select a class and at least one subject.'); return; } setBusy(true); setMsg('');
+    const { data, error } = await supabase.from('student_profiles').update({ category, subjects: mergeSubjects(subjects, otherSubjects) }).eq('id', profile.id).select().single();
+    if (error) setMsg(error.message); else if (data) { onUpdated(data); setMsg('Class and subjects updated.'); }
     setBusy(false);
   }
   const rows: Array<[string, string]> = [
@@ -254,9 +249,9 @@ function ProfileView({ profile, onBack, onUpdated }: { profile: Profile; onBack:
     ['Principal name', profile.principal_name || '—'], ['School area', profile.area], ['City', profile.city], ['State', profile.state],
     ['Profile created', new Date(profile.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })],
   ];
-  return <main className="flex min-h-screen flex-col bg-background"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onBack}><ChevronLeft/>Back to workspace</Button></div></header>
+  return <main className="site-canvas flex min-h-screen flex-col"><header className="border-b bg-card"><div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5"><Brand/><Button variant="outline" onClick={onBack}><ChevronLeft/>Back to workspace</Button></div></header>
   <section className="mx-auto w-full max-w-3xl flex-1 px-5 py-10"><div className="flex items-start gap-4"><div className="grid size-12 shrink-0 place-items-center rounded-md bg-moss text-moss-foreground"><UserRound/></div><div><p className="text-xs font-bold uppercase text-primary">My profile</p><h1 className="mt-2 text-3xl font-extrabold">{profile.student_name}</h1><p className="mt-2 text-sm text-muted-foreground">The student profile linked to this account.</p></div></div>
-  <div className="mt-8 rounded-md border bg-card p-5"><Label htmlFor="class-select">Current class or year</Label><div className="mt-2 flex flex-col gap-3 sm:flex-row"><select id="class-select" className={selectClass} value={category} onChange={(e)=>setCategory(e.target.value)}><option value="">{CLASS_OPTIONS.includes(profile.category) ? 'Select class…' : `Currently: ${profile.category} — select new class…`}</option>{CLASS_OPTIONS.map((c)=><option key={c} value={c}>{c}</option>)}</select><Button onClick={saveClass} disabled={busy || !category || category === profile.category}>{busy ? 'Saving…' : 'Save class'}</Button></div>{msg && <p role="status" className="mt-2 text-sm text-muted-foreground">{msg}</p>}</div>
+  <div className="mt-8 space-y-6 border-y py-6"><div><Label htmlFor="class-select">Current class or year</Label><select id="class-select" className={`${selectClass} mt-2`} value={category} onChange={e=>setCategory(e.target.value)}><option value="">{CLASS_OPTIONS.includes(profile.category) ? 'Select class…' : `Currently: ${profile.category} — select new class…`}</option>{CLASS_OPTIONS.map(c=><option key={c}>{c}</option>)}</select></div><SubjectPicker selected={subjects} other={otherSubjects} onSelected={setSubjects} onOther={setOtherSubjects} /><Button onClick={saveClass} disabled={busy || !category}>{busy ? 'Saving…' : 'Save class and subjects'}</Button>{msg && <p role="status" className="text-sm text-muted-foreground">{msg}</p>}</div>
   <dl className="mt-6 divide-y border-y">{rows.map(([k,v])=><div key={k} className="grid gap-1 py-4 sm:grid-cols-[200px_1fr]"><dt className="text-sm font-semibold text-muted-foreground">{k}</dt><dd className="text-sm font-medium">{v}</dd></div>)}</dl>
   </section><SiteFooter /></main>;
 }
