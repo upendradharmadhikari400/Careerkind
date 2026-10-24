@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRootRoute, createRouter, RouterProvider } from '@tanstack/react-router';
-vi.mock('@tanstack/react-start', () => ({ useServerFn: (f: unknown) => f, createServerFn: () => { const b: any = { middleware: () => b, inputValidator: () => b, handler: () => () => undefined }; return b; } }));
+vi.mock('@tanstack/react-start', () => ({ useServerFn: (f: unknown) => f }));
+vi.mock('@/lib/razorpay.functions', () => ({ createCounsellingOrder: vi.fn(), verifyCounsellingPayment: vi.fn() }));
 import { PremiumInvitation } from '@/components/PremiumInvitation';
 import { counsellingPlan } from '@/lib/counselling-config';
 
