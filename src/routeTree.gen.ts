@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CounsellingRouteImport } from './routes/counselling'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SchoolPartnersRouteImport } from './routes/school-partners'
 import { Route as ApiCounsellingRouteImport } from './routes/api/counselling'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchoolPartnersRoute = SchoolPartnersRouteImport.update({
+  id: '/school-partners',
+  path: '/school-partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCounsellingRoute = ApiCounsellingRouteImport.update({
   id: '/api/counselling',
   path: '/api/counselling',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/counselling': typeof CounsellingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/school-partners': typeof SchoolPartnersRoute
   '/api/counselling': typeof ApiCounsellingRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/counselling': typeof CounsellingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/school-partners': typeof SchoolPartnersRoute
   '/api/counselling': typeof ApiCounsellingRoute
 }
 export interface FileRoutesById {
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/counselling': typeof CounsellingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/school-partners': typeof SchoolPartnersRoute
   '/api/counselling': typeof ApiCounsellingRoute
 }
 export interface FileRouteTypes {
@@ -70,6 +79,7 @@ export interface FileRouteTypes {
     | '/counselling'
     | '/privacy-policy'
     | '/reset-password'
+    | '/school-partners'
     | '/api/counselling'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -77,6 +87,7 @@ export interface FileRouteTypes {
     | '/counselling'
     | '/privacy-policy'
     | '/reset-password'
+    | '/school-partners'
     | '/api/counselling'
   id:
     | '__root__'
@@ -84,6 +95,7 @@ export interface FileRouteTypes {
     | '/counselling'
     | '/privacy-policy'
     | '/reset-password'
+    | '/school-partners'
     | '/api/counselling'
   fileRoutesById: FileRoutesById
 }
@@ -92,6 +104,7 @@ export interface RootRouteChildren {
   CounsellingRoute: typeof CounsellingRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SchoolPartnersRoute: typeof SchoolPartnersRoute
   ApiCounsellingRoute: typeof ApiCounsellingRoute
 }
 
@@ -125,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/school-partners': {
+      id: '/school-partners'
+      path: '/school-partners'
+      fullPath: '/school-partners'
+      preLoaderRoute: typeof SchoolPartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/counselling': {
       id: '/api/counselling'
       path: '/api/counselling'
@@ -140,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   CounsellingRoute: CounsellingRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SchoolPartnersRoute: SchoolPartnersRoute,
   ApiCounsellingRoute: ApiCounsellingRoute,
 }
 export const routeTree = rootRouteImport
