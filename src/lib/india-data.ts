@@ -46,5 +46,5 @@ export const STATE_CITIES: Record<string, string[]> = {
 export const STATES = Object.keys(STATE_CITIES);
 
 export const CLASS_OPTIONS = [
-  '6th to 8th Class', '9th or 10th Class', '11th or 12th', 'Graduate - B.Sc', 'Graduate - B.Com', 'Graduate - B.A.', 'Graduate - B.Pharma', 'Graduate - BE or B.Tech',
+  '6th to 8th Class', '9th or 10th Class', '11th or 12th Class', 'Graduate - B.Sc', 'Graduate - B.Com', 'Graduate - B.A.', 'Graduate - B.Pharma', 'Graduate - BE or B.Tech',
 ];

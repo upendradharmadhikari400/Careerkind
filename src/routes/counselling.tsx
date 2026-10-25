@@ -121,7 +121,7 @@ function ChatRoom({ initial, firstName, verifiedPaidAt }: { initial: UIMessage[]
       <div className="mx-auto w-full max-w-4xl px-4 py-3">
         <p className="mb-3 text-xs leading-5 text-muted-foreground">{COUNSELLING_ACCESS_POLICY}</p>
         {access.expiresAt && <p className="mb-3 text-sm font-semibold">{access.canAsk ? `New questions available until ${new Date(access.expiresAt).toLocaleString('en-IN')}` : 'Your 28-day session has ended. Saved history remains available; a new paid session is needed for new questions.'}</p>}
-        {!access.canAsk && <div className="mb-3"><p className="mb-2 text-sm font-semibold">{access.kind === 'unpaid' ? 'Purchase a 28-day personal session to ask new questions.' : ''}</p><RazorpayButton mode="student" label={access.kind === 'unpaid' ? 'Pay ₹1,499 & start counselling' : 'Renew for ₹1,499'} onPaid={() => window.location.reload()} /></div>}
+        {!access.canAsk && <div className="mb-3"><p className="mb-2 text-sm font-semibold">{access.kind === 'unpaid' ? 'Purchase a 28-day personal session to ask new questions.' : ''}</p><RazorpayButton mode="student" label={access.kind === 'unpaid' ? 'Pay ₹1,499 (incl. GST) & start counselling' : 'Renew for ₹1,499 (incl. GST)'} onPaid={() => window.location.reload()} /></div>}
         {access.canAsk && <><div className="mb-3 flex gap-2 overflow-x-auto pb-1">{QUICK.map((q) => <Button key={q} variant="outline" size="sm" className="shrink-0" disabled={busy} onClick={() => send(q)}>{q}</Button>)}</div>
         <PromptInput onSubmit={(msg: PromptInputMessage) => send(msg.text ?? '')}>
           <PromptInputTextarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask about courses, colleges, exams, fees…" maxLength={2000} />

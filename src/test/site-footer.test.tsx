@@ -15,15 +15,13 @@ async function renderFooter() {
 describe('Site footer', () => {
   it('links to the privacy policy page', async () => {
     await renderFooter();
-    const link = screen.getByRole('link', { name: 'Privacy policy' });
-    expect(link.getAttribute('href')).toBe('/privacy-policy');
+    expect(screen.getByRole('link', { name: 'Privacy policy' }).getAttribute('href')).toBe('/privacy-policy');
   });
 
-  it('offers the support email as contact us', async () => {
+  it('shows contact us and the support email as plain text, not links', async () => {
     await renderFooter();
     expect(SUPPORT_EMAIL).toBe('Help.Contactus23@gmail.com');
-    const link = screen.getByRole('link', { name: /Contact us/i });
-    expect(link.getAttribute('href')).toBe('mailto:Help.Contactus23@gmail.com');
-    expect(screen.getByText('Help.Contactus23@gmail.com')).toBeTruthy();
+    expect(screen.getByText('Help.Contactus23@gmail.com').closest('a')).toBeNull();
+    expect(screen.getByText('Contact us').closest('a')).toBeNull();
   });
 });

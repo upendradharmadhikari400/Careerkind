@@ -62,7 +62,7 @@ export function RazorpayButton({ mode, label, onPaid }: { mode: string; label: s
 
   return <div className="flex flex-col gap-2">
     <div className="flex gap-2"><Input aria-label="Coupon code" placeholder="Coupon code (optional)" value={coupon} disabled={busy} maxLength={64} onChange={e => { setCoupon(e.target.value); setPrepared(null); setError(''); }} /><Button variant="outline" onClick={applyCoupon} disabled={busy || !coupon.trim()}>Apply</Button></div>
-    {prepared && <p role="status" className="text-sm font-semibold text-primary">Coupon applied. Total: ₹{(prepared.amount / 100).toFixed(2)}</p>}
+    {prepared && <p role="status" className="text-sm font-semibold text-primary">Coupon applied. Total: ₹{(prepared.amount / 100).toFixed(2)} (incl. GST)</p>}
     <Button size="lg" className="h-auto min-h-11 whitespace-normal px-4 py-3" disabled={busy} onClick={pay}>{busy ? <Loader2 className="animate-spin" /> : <CreditCard />}{prepared ? `Pay ₹${(prepared.amount / 100).toFixed(2)} & start counselling` : label}</Button>
     {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
   </div>;
