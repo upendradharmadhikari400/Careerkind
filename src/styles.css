@@ -66,7 +66,7 @@
   --sky: oklch(.92 .027 235);
   --sky-foreground: oklch(.35 .07 235);
   --ink-soft: oklch(.42 .026 179);
-  --canvas-pattern: linear-gradient(120deg, color-mix(in oklab, var(--sky) 35%, var(--background)), var(--background) 45%, color-mix(in oklab, var(--secondary) 40%, var(--background)));
+  --canvas-pattern: radial-gradient(circle at 12% 0%, color-mix(in oklab, var(--sky) 70%, transparent), transparent 42%), radial-gradient(circle at 92% 18%, color-mix(in oklab, var(--accent) 55%, transparent), transparent 38%), radial-gradient(circle at 50% 100%, color-mix(in oklab, var(--moss) 55%, transparent), transparent 50%), linear-gradient(180deg, oklch(.975 .012 230), oklch(.985 .006 140));
   --photo-shade: linear-gradient(90deg, color-mix(in oklab, var(--primary) 85%, transparent), color-mix(in oklab, var(--primary) 30%, transparent));
 }
 .site-canvas { background: var(--canvas-pattern); }

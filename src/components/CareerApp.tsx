@@ -141,11 +141,11 @@ function AuthScreen() {
   }
 
   return <main className="site-canvas flex min-h-screen flex-col">
-    <header className="brand-header flex min-h-20 flex-wrap items-center justify-between gap-4 border-b bg-card px-5 py-3"><Brand/><Button asChild variant="ghost" size="sm"><Link to="/school-partners">School partners<ArrowRight /></Link></Button></header>
+    <header className="brand-header flex min-h-20 flex-wrap items-center justify-between gap-4 border-b bg-card px-5 py-3"><Brand/><div className="flex gap-1"><Button asChild variant="ghost" size="sm"><Link to="/about">About us</Link></Button><Button asChild variant="ghost" size="sm"><Link to="/school-partners">School partners<ArrowRight /></Link></Button></div></header>
     <section className="community-banner relative isolate overflow-hidden">
       <img src={communityImage} width={1920} height={1088} alt="Students, parents and a teacher planning education together" className="absolute inset-0 -z-20 h-full w-full object-cover" />
       <div className="photo-shade absolute inset-0 -z-10" />
-      <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14"><Badge className="mb-4 border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground">Students · Parents · Schools</Badge><h1 className="text-4xl font-extrabold leading-tight text-primary-foreground sm:text-5xl">Career Kind</h1><p className="mt-4 max-w-lg text-base leading-7 text-primary-foreground">From self-discovery to a career roadmap.<br />Thoughtful futures, shaped together.</p></div>
+      <div className="mx-auto max-w-6xl px-5 py-12 sm:py-14"><Badge className="mb-4 border-primary-foreground/30 bg-primary-foreground/10 px-4 py-1.5 text-base font-bold text-primary-foreground sm:text-lg">Students · Parents · Schools</Badge><h1 className="text-4xl font-extrabold leading-tight text-primary-foreground sm:text-5xl">Career Kind</h1><p className="mt-4 max-w-lg text-base leading-7 text-primary-foreground">From self-discovery to a career roadmap.<br />Thoughtful futures, shaped together.</p></div>
     </section>
     <section className="mx-auto w-full max-w-6xl flex-1 px-5 pb-10">
       <div className="mx-auto w-full max-w-md py-8">
