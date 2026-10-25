@@ -33,7 +33,7 @@ const SECTIONS: Array<{ title: string; body: string[] }> = [
       'Student profile: student name, parent or guardian name, phone number, current class or year, school name, school area, state, city, board, subjects, and an optional principal name.',
       'Assessment information: every answer you choose in the free assessments, and the basic career profile generated from those answers.',
       'Counselling information: the messages you exchange with our AI career counsellor, saved so you can continue the same conversation later.',
-      'We do not ask for Aadhaar, bank account, card or other payment details. Online payment is not active yet, so no financial information is collected at this time.',
+      'We do not ask for Aadhaar or bank account details. Razorpay securely processes checkout details. We retain order references, verified payment time and coupon redemption records to confirm paid access; we do not store card details.',
     ],
   },
   {
