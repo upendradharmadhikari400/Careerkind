@@ -23,7 +23,9 @@ describe('Private coupon checkout', () => {
     const order = await createOrder({ data: { mode: 'student', coupon: 'private-test' }, context: { userId: 'owner', supabase: { from: mocks.userFrom } } });
     expect(order.amount).toBe(1499);
     expect(mocks.rpc).toHaveBeenCalledWith('reserve_counselling_coupon', expect.objectContaining({ p_user: 'owner', p_base_amount: 149900 }));
-    expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).amount).toBe(1499);
+    const sentRequest = mocks.fetch.mock.calls[0]?.[1];
+    if (!sentRequest) throw new Error('No Razorpay request was sent');
+    expect(JSON.parse(sentRequest.body).amount).toBe(1499);
   });
   it('cannot open an eleventh checkout once ten places are reserved', async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: { message: 'All coupon places have been used or reserved.' } });
